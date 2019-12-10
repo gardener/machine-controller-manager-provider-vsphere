@@ -14,13 +14,14 @@
  *
  */
 
-package vsphere
+package internal
 
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
-	"github.com/gardener/machine-controller-manager/pkg/driver/vsphere/flags"
+
+	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/internal/flags"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
@@ -29,17 +30,22 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-func Find(ctx context.Context, client *govmomi.Client, spec *v1alpha1.VsphereMachineClassSpec, machineID string) (*object.VirtualMachine, error) {
+func FindByIPath(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
 	ctx = flags.ContextWithPseudoFlagset(ctx, client, spec)
 	searchFlag, ctx := flags.NewSearchFlag(ctx, flags.SearchVirtualMachines)
 
-	searchFlag.SetByUUID(machineID)
+	folder := "vm"
+	if spec.Folder != "" {
+		folder = fmt.Sprintf("vm/%s", spec.Folder)
+	}
+	ipath := fmt.Sprintf("/%s/%s/%s", spec.Datacenter, folder, machineName)
+	searchFlag.SetByInventoryPath(ipath)
 	return searchFlag.VirtualMachine()
 }
 
-type VirtualMachineVisitor func(machine *object.VirtualMachine, obj mo.ManagedEntity, field object.CustomFieldDefList) error
+type VirtualMachineVisitor func(uuid string, obj mo.ManagedEntity, field object.CustomFieldDefList) error
 
-func VisitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *v1alpha1.VsphereMachineClassSpec, visitor VirtualMachineVisitor) error {
+func VisitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, visitor VirtualMachineVisitor) error {
 	ctx = flags.ContextWithPseudoFlagset(ctx, client, spec)
 	datacenterFlag, ctx := flags.NewDatacenterFlag(ctx)
 	dc, err := datacenterFlag.Datacenter()
@@ -79,12 +85,12 @@ func VisitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *v1a
 	if err != nil {
 		return err
 	}
-	vms := make([]*object.VirtualMachine, 0, len(refs))
+	ids := make([]string, 0, len(refs))
 	morefs := make([]types.ManagedObjectReference, 0, len(refs))
 	for _, ref := range refs {
 		vm, ok := ref.(*object.VirtualMachine)
 		if ok {
-			vms = append(vms, vm)
+			ids = append(ids, vm.UUID(ctx))
 			morefs = append(morefs, vm.Reference())
 		}
 	}
@@ -94,6 +100,11 @@ func VisitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *v1a
 	if err != nil {
 		return errors.Wrap(err, "DefaultCollector failed")
 	}
+	objMap := map[types.ManagedObjectReference]mo.ManagedEntity{}
+	for _, obj := range objs {
+		objMap[obj.Self] = obj
+	}
+
 	m, err := object.GetCustomFieldsManager(client.Client)
 	if err != nil {
 		return errors.Wrap(err, "GetCustomFieldsManager failed")
@@ -103,9 +114,9 @@ func VisitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *v1a
 		return errors.Wrap(err, "Field failed")
 	}
 
-	for i, vm := range vms {
-		obj := objs[i]
-		err := visitor(vm, obj, field)
+	for i := range ids {
+		obj := objMap[morefs[i]]
+		err := visitor(ids[i], obj, field)
 		if err != nil {
 			return errors.Wrapf(err, "visiting vm %s failed", obj.Name)
 		}
@@ -114,32 +125,50 @@ func VisitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *v1a
 	return nil
 }
 
-func Delete(ctx context.Context, client *govmomi.Client, spec *v1alpha1.VsphereMachineClassSpec, machineID string) error {
-	vm, err := Find(ctx, client, spec, machineID)
+func ShutDown(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (string, error) {
+	vm, err := shutdown(ctx, client, spec, machineName)
 	if err != nil {
-		return errors.Wrap(err, "find by machineID failed")
+		return "", err
+	}
+	return vm.UUID(ctx), nil
+}
+
+func Delete(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (string, error) {
+	vm, err := shutdown(ctx, client, spec, machineName)
+	if err != nil {
+		return "", err
+	}
+	machineID := vm.UUID(ctx)
+
+	task, err := vm.Destroy(ctx)
+	if err != nil {
+		return "", errors.Wrap(err, "starting Destroy failed")
+	}
+	_, err = task.WaitForResult(ctx, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "Destroy failed")
+	}
+	return machineID, nil
+}
+
+func shutdown(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
+	vm, err := FindByIPath(ctx, client, spec, machineName)
+	if err != nil {
+		return nil, errors.Wrap(err, "find by machineName failed")
 	}
 	powerState, err := vm.PowerState(ctx)
 	if err != nil {
-		return errors.Wrap(err, "PowerState failed")
+		return nil, errors.Wrap(err, "PowerState failed")
 	}
 	if powerState == types.VirtualMachinePowerStatePoweredOn {
 		task, err := vm.PowerOff(ctx)
 		if err != nil {
-			return errors.Wrap(err, "starting PowerOff failed")
+			return nil, errors.Wrap(err, "starting PowerOff failed")
 		}
 		_, err = task.WaitForResult(ctx, nil)
 		if err != nil {
-			return errors.Wrap(err, "PowerOff failed")
+			return nil, errors.Wrap(err, "PowerOff failed")
 		}
 	}
-	task, err := vm.Destroy(ctx)
-	if err != nil {
-		return errors.Wrap(err, "starting Destroy failed")
-	}
-	_, err = task.WaitForResult(ctx, nil)
-	if err != nil {
-		return errors.Wrap(err, "Destroy failed")
-	}
-	return nil
+	return vm, nil
 }

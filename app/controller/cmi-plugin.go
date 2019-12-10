@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/MartinWeindel/machine-controller-manager-provider-vsphere/pkg/vsphere"
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere"
 	"github.com/spf13/cobra"
 )
 
@@ -41,20 +41,29 @@ func init() {
 
 func main() {
 
-	flag.CommandLine.Parse([]string{})
+	err := flag.CommandLine.Parse([]string{})
+	if err != nil {
+		panic(err)
+	}
 
 	cmd := &cobra.Command{
 		Use:   "cmi-plugin",
-		Short: "gRPC CMI Plugin for machine-controller-manager",
+		Short: "vSphere gRPC CMI Plugin for machine-controller-manager",
 		Run: func(cmd *cobra.Command, args []string) {
 			handle()
 		},
 	}
 
 	cmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "Endpoint to be used for plugin")
-	cmd.MarkPersistentFlagRequired("endpoint")
+	err = cmd.MarkPersistentFlagRequired("endpoint")
+	if err != nil {
+		panic(err)
+	}
 
-	cmd.ParseFlags(os.Args[1:])
+	err = cmd.ParseFlags(os.Args[1:])
+	if err != nil {
+		panic(err)
+	}
 	if err := cmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s", err.Error())
 		os.Exit(1)

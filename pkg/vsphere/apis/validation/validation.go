@@ -14,54 +14,40 @@
  *
  */
 
-// Package validation is used to validate all the machine CRD objects
 package validation
 
 import (
+	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/gardener/machine-controller-manager/pkg/apis/machine"
+	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 )
 
-// ValidateVsphereMachineClass validates a VsphereMachineClass and returns a list of errors.
-func ValidateVsphereMachineClass(VsphereMachineClass *machine.VsphereMachineClass) field.ErrorList {
-	return internalValidateVsphereMachineClass(VsphereMachineClass)
-}
-
-func internalValidateVsphereMachineClass(VsphereMachineClass *machine.VsphereMachineClass) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	allErrs = append(allErrs, validateVsphereMachineClassSpec(&VsphereMachineClass.Spec, field.NewPath("spec"))...)
-	return allErrs
-}
-
-func validateVsphereMachineClassSpec(spec *machine.VsphereMachineClassSpec, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
+// ValidateVsphereProviderSpec validates Vsphere provider spec
+func ValidateVsphereProviderSpec(spec *api.VsphereProviderSpec, secrets *api.Secrets) []error {
+	var allErrs []error
 
 	if "" == spec.Datastore && "" == spec.DatastoreCluster {
-		allErrs = append(allErrs, field.Required(fldPath.Child("datastoreCluster"), "DatastoreCluster or Datastore is required"))
+		allErrs = append(allErrs, fmt.Errorf("either datastoreCluster or datastore field is required"))
 	}
 	if "" == spec.TemplateVM {
-		allErrs = append(allErrs, field.Required(fldPath.Child("templateVM"), "TemplateVM is required"))
+		allErrs = append(allErrs, fmt.Errorf("templateVM is a required field"))
 	}
-	if "" == spec.ComputeCluster && "" == spec.Pool && "" == spec.HostSystem {
-		allErrs = append(allErrs, field.Required(fldPath.Child("computeCluster"), "ComputeCluster or Pool or HostSystem is required"))
+	if "" == spec.ComputeCluster && "" == spec.ResourcePool && "" == spec.HostSystem {
+		allErrs = append(allErrs, fmt.Errorf("either computeCluster or resourcePool or hostSystem field is required"))
 	}
 	if "" == spec.Network {
-		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "Network is required"))
+		allErrs = append(allErrs, fmt.Errorf("network is a required field"))
 	}
-	// TODO martin: complete VsphereMachineClassSpec validation
 
-	allErrs = append(allErrs, validateSecretRef(spec.SecretRef, field.NewPath("spec.secretRef"))...)
-	allErrs = append(allErrs, validateVsphereClassSpecTags(spec.Tags, field.NewPath("spec.tags"))...)
+	allErrs = append(allErrs, validateSecrets(secrets)...)
+	allErrs = append(allErrs, validateSpecTags(spec.Tags)...)
 
 	return allErrs
 }
 
-func validateVsphereClassSpecTags(tags map[string]string, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
+func validateSpecTags(tags map[string]string) []error {
+	var allErrs []error
 	clusterName := ""
 	nodeRole := ""
 
@@ -74,11 +60,29 @@ func validateVsphereClassSpecTags(tags map[string]string, fldPath *field.Path) f
 	}
 
 	if clusterName == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("kubernetes.io/cluster/"), "Tag required of the form kubernetes.io/cluster/****"))
+		allErrs = append(allErrs, fmt.Errorf("tag required of the form kubernetes.io/cluster/****"))
 	}
 	if nodeRole == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("kubernetes.io/role/"), "Tag required of the form kubernetes.io/role/****"))
+		allErrs = append(allErrs, fmt.Errorf("tag required of the form kubernetes.io/role/****"))
 	}
 
+	return allErrs
+}
+
+func validateSecrets(reference *api.Secrets) []error {
+	var allErrs []error
+	if "" == reference.VsphereHost {
+		allErrs = append(allErrs, fmt.Errorf("Secret vsphereHost is required field"))
+	}
+	if "" == reference.VsphereUsername {
+		allErrs = append(allErrs, fmt.Errorf("Secret vsphereUsername is required field"))
+	}
+	if "" == reference.VspherePassword {
+		allErrs = append(allErrs, fmt.Errorf("Secret vspherePassword is required field"))
+	}
+
+	if "" == reference.UserData {
+		allErrs = append(allErrs, fmt.Errorf("Secret userData is required field"))
+	}
 	return allErrs
 }

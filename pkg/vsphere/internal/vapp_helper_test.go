@@ -16,7 +16,7 @@
  *
  */
 
-package vsphere
+package internal
 
 import (
 	"github.com/onsi/gomega"

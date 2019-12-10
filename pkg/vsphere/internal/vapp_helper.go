@@ -14,15 +14,16 @@
  *
  */
 
-package vsphere
+package internal
 
 import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
 	"text/template"
+
+	"github.com/pkg/errors"
 )
 
 type coreosConfig struct {

@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  *
  */
-package vsphere
+package internal
 
 import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/vmware/govmomi/task"
 	"os"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
-	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
-	"github.com/gardener/machine-controller-manager/pkg/driver/vsphere/flags"
+	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/internal/flags"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/property"
+	"github.com/vmware/govmomi/task"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -49,7 +48,7 @@ const (
 type Clone struct {
 	name     string
 	userData string
-	spec     *v1alpha1.VsphereMachineClassSpec
+	spec     *api.VsphereProviderSpec
 
 	NetworkFlag *flags.NetworkFlag
 
@@ -66,7 +65,7 @@ type Clone struct {
 	Clone *object.VirtualMachine
 }
 
-func NewClone(machineName string, spec *v1alpha1.VsphereMachineClassSpec, userData string) *Clone {
+func NewClone(machineName string, spec *api.VsphereProviderSpec, userData string) *Clone {
 	return &Clone{name: machineName, spec: spec, userData: userData}
 }
 
@@ -194,7 +193,7 @@ func (cmd *Clone) Run(ctx context.Context, client *govmomi.Client) error {
 			if err != nil {
 				return errors.Wrap(err, "setting VApp (coreos64)")
 			}
-			vapp = &v1alpha1.VApp{Properties: map[string]string{"guestinfo.coreos.config.data": ignitionContent}}
+			vapp = &api.VApp{Properties: map[string]string{"guestinfo.coreos.config.data": ignitionContent}}
 		default:
 			// Provide cloud-init as VApp.
 			// This assumes, that the image defines a VApp with the properties
@@ -211,7 +210,7 @@ func (cmd *Clone) Run(ctx context.Context, client *govmomi.Client) error {
 			if password != "" {
 				props["password"] = password
 			}
-			vapp = &v1alpha1.VApp{Properties: props}
+			vapp = &api.VApp{Properties: props}
 		}
 	}
 
@@ -312,7 +311,7 @@ func isAlreadyUpgraded(err error) bool {
 // We track changes to keys to determine if any have been removed from
 // configuration - if they have, we add them with an empty value to ensure
 // they are removed from vAppConfig on the update.
-func (cmd *Clone) expandVAppConfig(vapp *v1alpha1.VApp) (*types.VmConfigSpec, error) {
+func (cmd *Clone) expandVAppConfig(vapp *api.VApp) (*types.VmConfigSpec, error) {
 	vm := cmd.Clone
 	if vapp == nil {
 		return nil, nil
@@ -404,7 +403,7 @@ func (cmd *Clone) powerOn(ctx context.Context) error {
 	return nil
 }
 
-func (cmd *Clone) cloneVM(ctx context.Context, systemDisk *v1alpha1.VSphereSystemDisk) (*object.VirtualMachine, error) {
+func (cmd *Clone) cloneVM(ctx context.Context, systemDisk *api.VSphereSystemDisk) (*object.VirtualMachine, error) {
 	devices, err := cmd.VirtualMachine.Device(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "listing template VM devices failed")

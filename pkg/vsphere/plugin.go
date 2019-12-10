@@ -22,7 +22,10 @@ Modifications Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights 
 package vsphere
 
 import (
-	cmicommon "github.com/MartinWeindel/machine-controller-manager-provider-vsphere/pkg/cmicommon"
+	"context"
+	cmicommon "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/cmicommon"
+	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/internal"
 	"github.com/golang/glog"
 )
 
@@ -50,8 +53,8 @@ func (p *Plugin) Run() {
 	s := cmicommon.NewNonBlockingGRPCServer()
 	s.Start(
 		p.endpoint,
-		NewIdentityPlugin(p, &pluginSPIImpl{}),
-		NewMachinePlugin(p, &pluginSPIImpl{}),
+		NewIdentityPlugin(p, &internal.PluginSPIImpl{}),
+		NewMachinePlugin(p, &internal.PluginSPIImpl{}),
 	)
 	s.Wait()
 }
@@ -60,11 +63,12 @@ func (p *Plugin) Run() {
 // You can optionally enhance this interface to add interface methods here
 // You can use it to mock cloud provider calls
 type PluginSPI interface {
+	CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (machineID string, err error)
+	DeleteMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (machineID string, err error)
+	GetMachineStatus(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (machineID string, err error)
+	ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (machineIDList map[string]string, err error)
+	ShutDownMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (machineID string, err error)
 }
-
-//pluginSPIImpl is the real implementation of PluginSPI interface
-// that makes the calls to the provider SDK
-type pluginSPIImpl struct{}
 
 // MachinePlugin implements the cmi.MachineServer
 // It also implements the pluginSPI interface

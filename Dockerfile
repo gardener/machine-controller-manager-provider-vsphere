@@ -1,4 +1,4 @@
-FROM alpine:3.6
+FROM alpine:3.10
 
 RUN apk add --update bash curl
 

@@ -36,7 +36,7 @@ func NewResourcePoolFlag(ctx context.Context) (*ResourcePoolFlag, context.Contex
 	}
 
 	v := &ResourcePoolFlag{}
-	v.name = GetSpecFromPseudoFlagset(ctx).Pool
+	v.name = GetSpecFromPseudoFlagset(ctx).ResourcePool
 	v.DatacenterFlag, ctx = NewDatacenterFlag(ctx)
 	ctx = context.WithValue(ctx, resourcePoolFlagKey, v)
 	return v, ctx

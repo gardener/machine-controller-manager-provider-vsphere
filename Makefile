@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PROVIDER_NAME       := SampleProvider
+PROVIDER_NAME       := Vsphere
 PROJECT_NAME        := gardener
 BINARY_PATH         := bin/
-IMAGE_REPOSITORY    := docker-repository-link-goes-here
+IMAGE_REPOSITORY    := eu.gcr.io/gardener-project/test/machine-controller-manager-provider-vsphere
 IMAGE_TAG           := $(shell cat VERSION)
 
 #########################################

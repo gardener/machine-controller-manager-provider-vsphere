@@ -98,6 +98,11 @@ func (flag *SearchFlag) SetByDatastorePath(path string) {
 	flag.isset = true
 }
 
+func (flag *SearchFlag) SetByInventoryPath(path string) {
+	flag.byInventoryPath = path
+	flag.isset = true
+}
+
 func (flag *SearchFlag) IsSet() bool {
 	return flag.isset
 }

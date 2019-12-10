@@ -17,7 +17,8 @@ package flags
 
 import (
 	"context"
-	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
+
+	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/vmware/govmomi"
 )
 
@@ -29,7 +30,7 @@ var (
 	specPseudoFlagKey   = pseudoFlagKey("spec")
 )
 
-func ContextWithPseudoFlagset(ctx context.Context, client *govmomi.Client, spec *v1alpha1.VsphereMachineClassSpec) context.Context {
+func ContextWithPseudoFlagset(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec) context.Context {
 	ctx = context.WithValue(ctx, clientPseudoFlagKey, client)
 	ctx = context.WithValue(ctx, specPseudoFlagKey, spec)
 	return ctx
@@ -39,6 +40,6 @@ func GetClientFromPseudoFlagset(ctx context.Context) *govmomi.Client {
 	return ctx.Value(clientPseudoFlagKey).(*govmomi.Client)
 }
 
-func GetSpecFromPseudoFlagset(ctx context.Context) *v1alpha1.VsphereMachineClassSpec {
-	return ctx.Value(specPseudoFlagKey).(*v1alpha1.VsphereMachineClassSpec)
+func GetSpecFromPseudoFlagset(ctx context.Context) *api.VsphereProviderSpec {
+	return ctx.Value(specPseudoFlagKey).(*api.VsphereProviderSpec)
 }
