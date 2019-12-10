@@ -19,12 +19,12 @@ https://github.com/kubernetes-csi/drivers/blob/release-1.0/pkg/nfs/nodeserver.go
 Modifications Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved.
 */
 
-package sampleprovider
+package vsphere
 
 import (
 	"fmt"
 
-	api "github.com/gardener/machine-controller-manager-provider-sampleprovider/pkg/sampleprovider/apis"
+	api "github.com/MartinWeindel/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/gardener/machine-spec/lib/go/cmi"
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
@@ -161,7 +161,7 @@ func (ms *MachinePlugin) ShutDownMachine(ctx context.Context, req *cmi.ShutDownM
 func dummyMethod() {
 	// Sample code to access provider spec
 	// Delete the 4 following line in the controller implementation
-	dummyObject := api.SampleProviderProviderSpec{
+	dummyObject := api.VsphereProviderSpec{
 		APIVersion: "v1alpha1",
 	}
 	fmt.Println("APIVersion of object ", dummyObject.APIVersion)

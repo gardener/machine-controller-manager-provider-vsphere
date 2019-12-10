@@ -19,10 +19,10 @@ https://github.com/kubernetes-csi/drivers/blob/release-1.0/pkg/nfs/plugin.go
 Modifications Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved.
 */
 
-package sampleprovider
+package vsphere
 
 import (
-	cmicommon "github.com/gardener/machine-controller-manager-provider-sampleprovider/pkg/cmicommon"
+	cmicommon "github.com/MartinWeindel/machine-controller-manager-provider-vsphere/pkg/cmicommon"
 	"github.com/golang/glog"
 )
 

@@ -1,4 +1,4 @@
-module github.com/gardener/machine-controller-manager-provider-sampleprovider
+module github.com/MartinWeindel/machine-controller-manager-provider-vsphere
 
 go 1.12
 

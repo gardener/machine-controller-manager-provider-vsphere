@@ -1,8 +1,8 @@
-# machine-controller-manager-provider-sampleprovider
-Out of tree (gRPC based) implementation for `SampleProvider` as a new provider.
+# machine-controller-manager-provider-vsphere
+Out of tree (gRPC based) implementation for `Vsphere` as a new provider.
 
 ## About
-- This is a sample repository that provides the blueprint required to implement a new (hyperscale) provider. We call the new provider as `SampleProvider` for our ease.
+- This is a sample repository that provides the blueprint required to implement a new (hyperscale) provider. We call the new provider as `Vsphere` for our ease.
 - Each provider (plugin/actuator/driver) is a gRPC server and implements the services defined at [machine-spec](https://github.com/gardener/machine-spec).
 
 ## Fundamental Design Principles:

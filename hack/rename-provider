@@ -17,24 +17,24 @@
 normal_case=$1
 small_case=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
-sed -i '' -e "s/sampleprovider/$small_case/g" app/controller/cmi-plugin.go
-sed -i '' -e "s/sampleprovider/$small_case/g" pkg/sampleprovider/plugin.go
-sed -i '' -e "s/sampleprovider/$small_case/g" pkg/sampleprovider/identity_server.go
-sed -i '' -e "s/sampleprovider/$small_case/g" pkg/sampleprovider/machine_server.go
-sed -i '' -e "s/SampleProvider/$normal_case/g" pkg/sampleprovider/machine_server.go
-sed -i '' -e "s/sampleprovider/$small_case/g" Makefile
-sed -i '' -e "s/sampleprovider/$small_case/g" README.md
-sed -i '' -e "s/SampleProvider/$normal_case/g" pkg/sampleprovider/apis/provider_spec.go
+sed -i '' -e "s/vsphere/$small_case/g" app/controller/cmi-plugin.go
+sed -i '' -e "s/vsphere/$small_case/g" pkg/vsphere/plugin.go
+sed -i '' -e "s/vsphere/$small_case/g" pkg/vsphere/identity_server.go
+sed -i '' -e "s/vsphere/$small_case/g" pkg/vsphere/machine_server.go
+sed -i '' -e "s/Vsphere/$normal_case/g" pkg/vsphere/machine_server.go
+sed -i '' -e "s/vsphere/$small_case/g" Makefile
+sed -i '' -e "s/vsphere/$small_case/g" README.md
+sed -i '' -e "s/Vsphere/$normal_case/g" pkg/vsphere/apis/provider_spec.go
 
-sed -i '' -e "1 s/sampleprovider/$small_case/" go.mod
-sed -i '' -e "s/sampleprovider/$small_case/g" CODEOWNERS
-sed -i '' -e "s/sampleprovider/$small_case/g" NOTICE.md
-sed -i '' -e "s/SampleProvider/$normal_case/g" README.md
+sed -i '' -e "1 s/vsphere/$small_case/" go.mod
+sed -i '' -e "s/vsphere/$small_case/g" CODEOWNERS
+sed -i '' -e "s/vsphere/$small_case/g" NOTICE.md
+sed -i '' -e "s/Vsphere/$normal_case/g" README.md
 
-sed -i '' -e "s/SampleProvider/$normal_case/g" hack/rename-provider
-sed -i '' -e "s/sampleprovider/$small_case/g" hack/rename-provider
+sed -i '' -e "s/Vsphere/$normal_case/g" hack/rename-provider
+sed -i '' -e "s/vsphere/$small_case/g" hack/rename-provider
 
-mv pkg/sampleprovider pkg/$small_case
+mv pkg/vsphere pkg/$small_case
 
-echo "Renamed provider SampleProvider to $normal_case."
+echo "Renamed provider Vsphere to $normal_case."
 echo "PLEASE Update CODEOWNERS file to reflect relevant owners"

@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gardener/machine-controller-manager-provider-sampleprovider/pkg/sampleprovider"
+	"github.com/MartinWeindel/machine-controller-manager-provider-vsphere/pkg/vsphere"
 	"github.com/spf13/cobra"
 )
 
@@ -64,6 +64,6 @@ func main() {
 }
 
 func handle() {
-	d := sampleprovider.NewPlugin(endpoint)
+	d := vsphere.NewPlugin(endpoint)
 	d.Run()
 }

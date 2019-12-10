@@ -19,7 +19,7 @@ https://github.com/kubernetes-csi/drivers/blob/release-1.0/pkg/csi-common/identi
 Modifications Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved.
 */
 
-package sampleprovider
+package vsphere
 
 import (
 	"github.com/gardener/machine-spec/lib/go/cmi"
