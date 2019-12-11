@@ -4,7 +4,27 @@ metadata:
   name: test-mc
   namespace: default # Namespace where the controller would watch
 providerSpec:
-  dummy-field: "provider-api based fields goes here"
+  sshKeys: # ssh-keys for accessing machine
+    - "ssh-rsa AAAAB3...ShzA9 user@node"
+  datacenter: Stellar # optional Vsphere datacenter name
+  computeCluster: dev_cluster # optional compute cluster to place VM, either computer cluster, pool, or hostSystem must be set
+  #resourcePool: pool1 # resource pool, either computer cluster, pool, or hostSystem must be set
+  #hostSystem: esxi1 # optional host system to use for VM, either computer cluster, pool, or hostSystem must be set
+  network: nw1 # name of Vsphere network to join
+  folder: gardener # optional folder in Vsphere where to create the machine VM
+  datastoreCluster: dsc1 # optional datastore cluster, either datastore cluster or datastore must be set
+  #datastore: ds1 # optional datastore, either datastore cluster or datastore must be set
+  templateVM: "gardener/templates/coreos-2191.5.0" # path to template VM
+  guestId: coreos64Guest # optional guestId, overwrites guestId from template VM
+  numCpus: 2 # optional number of CPUs, overwrites value from template VM
+  memory: 1024  # optional memory in MB, overwrites value from template VM
+  systemDisk:
+    size: 20 # optional system disk size in GB, overwrites value from template VM, must be >= original size
+  tags:
+    kubernetes.io/cluster/YOUR_CLUSTER_NAME: "1" # This is mandatory as the safety controller uses this tag to identify VMs created by this controller.
+    kubernetes.io/role/YOUR_ROLE_NAME: "1" # This is mandatory as the safety controller uses this tag to identify VMs created by by this controller.
+    tag1: tag1-value # A set of additional tags attached to a machine (optional)
+    tag2: tag2-value # A set of additional tags attached to a machine (optional)
 secretRef: # If required
   name: test-secret
   namespace: default # Namespace where the controller would watch
