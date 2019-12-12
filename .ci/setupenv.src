@@ -2,8 +2,6 @@
 
 SOURCE_PATH="$(readlink -f "$(dirname ${0})/..")"
 
-source "$SOURCE_PATH/build/settings.src"
-
 if [[ -z "${BINARY_PATH}" ]]; then
   export BINARY_PATH="${SOURCE_PATH}/bin"
 else

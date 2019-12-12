@@ -1,4 +1,4 @@
-machine-controller-manager-provider-aws:
+machine-controller-manager-provider-vsphere:
   template: 'default'
   base_definition:
     repo: ~
@@ -9,22 +9,22 @@ machine-controller-manager-provider-aws:
         inject_effective_version: true
       publish:
         dockerimages:
-          machine-controller-manager-provider-aws:
+          machine-controller-manager-provider-vsphere:
             inputs:
               repos:
                 source: ~ # default
               steps:
                 build: ~
             registry: 'gcr-readwrite'
-            image: 'eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-aws'
+            image: 'eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-vsphere'
     steps:
       check:
-        image: 'golang:1.12.0'
+        image: 'golang:1.13.3'
       build:
-        image: 'golang:1.12.0'
+        image: 'golang:1.13.3'
         output_dir: 'binary'
       test:
-        image: 'golang:1.12.0'
+        image: 'golang:1.13.3'
   jobs:
     head-update:
       traits:

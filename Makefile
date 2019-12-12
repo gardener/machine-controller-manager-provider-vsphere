@@ -44,6 +44,18 @@ update-dependencies:
 	@env GO111MODULE=on go get -u
 
 #########################################
+# Rules for testing
+#########################################
+
+.PHONY: test
+test:
+	@.ci/test
+
+.PHONY: check
+check:
+	@.ci/check
+
+#########################################
 # Rules for build/release
 #########################################
 
@@ -52,19 +64,11 @@ release: build-local build docker-image docker-push rename-binaries
 
 .PHONY: build-local
 build-local:
-	go build \
-	-v \
-	-o ${BINARY_PATH}/cmi-plugin \
-	app/controller/cmi-plugin.go
+		@env LOCAL_BUILD=1 .ci/build
 
 .PHONY: build
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-	-a \
-	-v \
-	-o ${BINARY_PATH}/rel/cmi-plugin \
-	app/controller/cmi-plugin.go
-
+	@.ci/build
 .PHONY: docker-image
 docker-image:
 	@if [[ ! -f ${BINARY_PATH}/rel/cmi-plugin ]]; then echo "No binary found. Please run 'make build'"; false; fi
