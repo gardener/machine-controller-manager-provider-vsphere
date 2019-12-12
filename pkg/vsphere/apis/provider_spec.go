@@ -41,6 +41,7 @@ type VsphereProviderSpec struct {
 	HostSystem string `json:"hostSystem,omitempty"`
 
 	// Folder is the folder to place VMs into
+	// +optional
 	Folder string `json:"folder,omitempty"`
 	// NumCpus is the number of virtual CPUs of the VM
 	NumCpus int `json:"numCpus"`
