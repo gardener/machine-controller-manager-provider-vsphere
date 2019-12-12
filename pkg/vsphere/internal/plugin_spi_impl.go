@@ -33,6 +33,7 @@ import (
 // that makes the calls to the provider SDK
 type PluginSPIImpl struct{}
 
+// CreateMachine creates a VM by cloning from a template
 func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
@@ -40,7 +41,7 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 	}
 	defer client.Logout(ctx)
 
-	cmd := NewClone(machineName, providerSpec, secrets.UserData)
+	cmd := newClone(machineName, providerSpec, secrets.UserData)
 	err = cmd.Run(ctx, client)
 	if err != nil {
 		return "", err
@@ -49,6 +50,7 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 	return machineID, nil
 }
 
+// DeleteMachine deletes a VM by name
 func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
@@ -56,7 +58,7 @@ func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string,
 	}
 	defer client.Logout(ctx)
 
-	machineID, err := Delete(ctx, client, providerSpec, machineName)
+	machineID, err := deleteVM(ctx, client, providerSpec, machineName)
 	if err != nil {
 		return "", err
 	}
@@ -64,6 +66,7 @@ func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string,
 	return machineID, nil
 }
 
+// ShutDownMachine shuts down a machine by name
 func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
@@ -71,7 +74,7 @@ func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName strin
 	}
 	defer client.Logout(ctx)
 
-	machineID, err := ShutDown(ctx, client, providerSpec, machineName)
+	machineID, err := shutDownVM(ctx, client, providerSpec, machineName)
 	if err != nil {
 		return "", err
 	}
@@ -79,6 +82,7 @@ func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName strin
 	return machineID, nil
 }
 
+// GetMachineStatus checks for existence of VM by name
 func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
@@ -86,7 +90,7 @@ func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName stri
 	}
 	defer client.Logout(ctx)
 
-	vm, err := FindByIPath(ctx, client, providerSpec, machineName)
+	vm, err := findByIPath(ctx, client, providerSpec, machineName)
 	if err != nil {
 		return "", err
 	}
@@ -95,6 +99,7 @@ func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName stri
 	return machineID, nil
 }
 
+// ListMachines lists all VMs in the DC or folder
 func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (map[string]string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
@@ -136,7 +141,7 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 		return nil
 	}
 
-	err = VisitVirtualMachines(ctx, client, providerSpec, visitor)
+	err = visitVirtualMachines(ctx, client, providerSpec, visitor)
 	if err != nil {
 		return nil, err
 	}
@@ -145,13 +150,13 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 }
 
 func createVsphereClient(ctx context.Context, secret *api.Secrets) (*govmomi.Client, error) {
-	clientUrl, err := url.Parse("https://" + secret.VsphereHost + "/sdk")
+	clientURL, err := url.Parse("https://" + secret.VsphereHost + "/sdk")
 	if err != nil {
 		return nil, err
 	}
 
-	clientUrl.User = url.UserPassword(secret.VsphereUsername, secret.VspherePassword)
+	clientURL.User = url.UserPassword(secret.VsphereUsername, secret.VspherePassword)
 
 	// Connect and log in to ESX or vCenter
-	return govmomi.NewClient(ctx, clientUrl, secret.VsphereInsecureSSL)
+	return govmomi.NewClient(ctx, clientURL, secret.VsphereInsecureSSL)
 }

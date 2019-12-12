@@ -52,9 +52,9 @@ type VsphereProviderSpec struct {
 	Network string `json:"network"`
 	// TemplateVM is the VM template to clone
 	TemplateVM string `json:"templateVM"`
-	// GuestId is an optional value to overwrite the VM guest id of the templae
+	// GuestID is an optional value to overwrite the VM guest id of the templae
 	// +optional
-	GuestId string `json:"guestId,omitempty"`
+	GuestID string `json:"guestId,omitempty"`
 	// VApp contains the Properties of the VApp to start on booting
 	VApp *VApp `json:"vapp,omitempty"`
 	// Force is an experimental flag to overwrite an existing VM with the same name

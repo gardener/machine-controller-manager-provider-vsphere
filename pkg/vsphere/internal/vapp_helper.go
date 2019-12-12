@@ -60,7 +60,7 @@ func coreosIgnition(config *coreosConfig) (string, error) {
 	return buf.String(), nil
 }
 
-func addSshKeysSection(userdata string, sshKeys []string) (string, error) {
+func addSSHKeysSection(userdata string, sshKeys []string) (string, error) {
 	if len(sshKeys) == 0 {
 		return userdata, nil
 	}

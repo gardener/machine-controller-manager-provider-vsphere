@@ -59,9 +59,9 @@ func TestAddSSHKeys(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	userdata := "I2Nsb3VkLWNvbmZpZwpydW5jbWQ6Ci0gJ2VjaG8gMTI3LjAuMC4xIGBob3N0bmFtZWAgPj4gL2V0Yy9ob3N0cy14eHgnCg=="
 
-	newUserdata, err := addSshKeysSection(userdata, []string{"ssh1", "ssh2"})
+	newUserdata, err := addSSHKeysSection(userdata, []string{"ssh1", "ssh2"})
 	if err != nil {
-		t.Errorf("addSshKeysSection failed with %s", err)
+		t.Errorf("addSSHKeysSection failed with %s", err)
 	}
 	g.Expect(newUserdata).To(gomega.Equal("I2Nsb3VkLWNvbmZpZwpydW5jbWQ6Ci0gJ2VjaG8gMTI3LjAuMC4xIGBob3N0bmFtZWAgPj4gL2V0Yy9ob3N0cy14eHgnCgpzc2hfYXV0aG9yaXplZF9rZXlzOgotICJzc2gxIgotICJzc2gyIgo="))
 }

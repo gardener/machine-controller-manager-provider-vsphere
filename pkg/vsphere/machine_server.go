@@ -205,7 +205,7 @@ func (ms *MachinePlugin) ListMachines(ctx context.Context, req *cmi.ListMachines
 //
 func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *cmi.GetVolumeIDsRequest) (*cmi.GetVolumeIDsResponse, error) {
 	// Log messages to track start of request
-	glog.V(2).Infof("GetVolumeIDs request has been received (count=%d)")
+	glog.V(2).Infof("GetVolumeIDs request has been received")
 	glog.V(4).Infof("PVSpecList = %q", req.PVSpecList)
 
 	var volumeSpecs []*corev1.PersistentVolumeSpec
@@ -218,14 +218,14 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *cmi.GetVolumeIDs
 	for i := range volumeSpecs {
 		spec := volumeSpecs[i]
 		if spec.VsphereVolume == nil {
-			// Not an aws volume
+			// Not an vsphere volume
 			continue
 		}
 		volumeID := spec.VsphereVolume.VolumePath
 		volumeIDs = append(volumeIDs, volumeID)
 	}
 
-	glog.V(2).Infof("GetVolumeIDs machines request has been processed successfully. ", len(volumeIDs))
+	glog.V(2).Infof("GetVolumeIDs machines request has been processed successfully (%d/%d).", len(volumeIDs), len(volumeSpecs))
 	glog.V(4).Infof("GetVolumeIDs volumneIDs: %v", volumeIDs)
 
 	Resp := &cmi.GetVolumeIDsResponse{

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  *
  */
+
 package internal
 
 import (
@@ -45,7 +46,7 @@ const (
 	hwVersion       = 15 // recommended in https://cloud-provider-vsphere.sigs.k8s.io/tutorials/kubernetes-on-vsphere-with-kubeadm.html
 )
 
-type Clone struct {
+type clone struct {
 	name     string
 	userData string
 	spec     *api.VsphereProviderSpec
@@ -65,11 +66,11 @@ type Clone struct {
 	Clone *object.VirtualMachine
 }
 
-func NewClone(machineName string, spec *api.VsphereProviderSpec, userData string) *Clone {
-	return &Clone{name: machineName, spec: spec, userData: userData}
+func newClone(machineName string, spec *api.VsphereProviderSpec, userData string) *clone {
+	return &clone{name: machineName, spec: spec, userData: userData}
 }
 
-func (cmd *Clone) Run(ctx context.Context, client *govmomi.Client) error {
+func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 	var err error
 
 	ctx = flags.ContextWithPseudoFlagset(ctx, client, cmd.spec)
@@ -158,11 +159,11 @@ func (cmd *Clone) Run(ctx context.Context, client *govmomi.Client) error {
 	if err := cmd.VirtualMachine.Properties(ctx, cmd.VirtualMachine.Reference(), nil, &props); err != nil {
 		return errors.Wrap(err, "retrieving properties from template VM failed")
 	}
-	guestId := props.Config.GuestId
-	if cmd.spec.GuestId != "" {
-		guestId = cmd.spec.GuestId
+	guestID := props.Config.GuestId
+	if cmd.spec.GuestID != "" {
+		guestID = cmd.spec.GuestID
 	}
-	glog.V(4).Infof("Template guestId: %s, used guestId: %s", props.Config.GuestId, guestId)
+	glog.V(4).Infof("Template guestId: %s, used guestId: %s", props.Config.GuestId, guestID)
 
 	sshkeys := make([]string, len(cmd.spec.SSHKeys))
 	for i := range cmd.spec.SSHKeys {
@@ -171,7 +172,7 @@ func (cmd *Clone) Run(ctx context.Context, client *govmomi.Client) error {
 	vapp := cmd.spec.VApp
 	if vapp == nil {
 
-		switch guestId {
+		switch guestID {
 		case "coreos64Guest":
 			// provide ignition as VApp
 			coreosConfig := &coreosConfig{
@@ -198,7 +199,7 @@ func (cmd *Clone) Run(ctx context.Context, client *govmomi.Client) error {
 			// Provide cloud-init as VApp.
 			// This assumes, that the image defines a VApp with the properties
 			// "hostname", "user-data" and "password" like the Ubuntu cloud images
-			newUserdata, err := addSshKeysSection(cmd.userData, sshkeys)
+			newUserdata, err := addSSHKeysSection(cmd.userData, sshkeys)
 			if err != nil {
 				return errors.Wrap(err, "setting VApp (default)")
 			}
@@ -229,8 +230,8 @@ func (cmd *Clone) Run(ctx context.Context, client *govmomi.Client) error {
 		vmConfigSpec.MemoryMB = int64(memory)
 	}
 	vmConfigSpec.VAppConfig = vappConfig
-	if cmd.spec.GuestId != "" {
-		vmConfigSpec.GuestId = cmd.spec.GuestId
+	if cmd.spec.GuestID != "" {
+		vmConfigSpec.GuestId = cmd.spec.GuestID
 	}
 
 	// ensure that Disk UUID is enabled
@@ -276,7 +277,7 @@ func (cmd *Clone) Run(ctx context.Context, client *govmomi.Client) error {
 	return cmd.powerOn(ctx)
 }
 
-func (cmd *Clone) upgradeHardware(ctx context.Context, vm *object.VirtualMachine, version int) error {
+func (cmd *clone) upgradeHardware(ctx context.Context, vm *object.VirtualMachine, version int) error {
 	if version > 0 {
 		// update hardware
 		version := fmt.Sprintf("vmx-%02d", hwVersion)
@@ -311,7 +312,7 @@ func isAlreadyUpgraded(err error) bool {
 // We track changes to keys to determine if any have been removed from
 // configuration - if they have, we add them with an empty value to ensure
 // they are removed from vAppConfig on the update.
-func (cmd *Clone) expandVAppConfig(vapp *api.VApp) (*types.VmConfigSpec, error) {
+func (cmd *clone) expandVAppConfig(vapp *api.VApp) (*types.VmConfigSpec, error) {
 	vm := cmd.Clone
 	if vapp == nil {
 		return nil, nil
@@ -380,7 +381,7 @@ func moProperties(vm *object.VirtualMachine) (*mo.VirtualMachine, error) {
 	return &props, nil
 }
 
-func (cmd *Clone) powerOn(ctx context.Context) error {
+func (cmd *clone) powerOn(ctx context.Context) error {
 	vm := cmd.Clone
 	task, err := vm.PowerOn(ctx)
 	if err != nil {
@@ -403,7 +404,7 @@ func (cmd *Clone) powerOn(ctx context.Context) error {
 	return nil
 }
 
-func (cmd *Clone) cloneVM(ctx context.Context, systemDisk *api.VSphereSystemDisk) (*object.VirtualMachine, error) {
+func (cmd *clone) cloneVM(ctx context.Context, systemDisk *api.VSphereSystemDisk) (*object.VirtualMachine, error) {
 	devices, err := cmd.VirtualMachine.Device(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "listing template VM devices failed")

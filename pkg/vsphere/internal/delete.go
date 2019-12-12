@@ -31,7 +31,7 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-func FindByIPath(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
+func findByIPath(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
 	ctx = flags.ContextWithPseudoFlagset(ctx, client, spec)
 	searchFlag, ctx := flags.NewSearchFlag(ctx, flags.SearchVirtualMachines)
 
@@ -53,9 +53,9 @@ func FindByIPath(ctx context.Context, client *govmomi.Client, spec *api.VsphereP
 	return obj, nil
 }
 
-type VirtualMachineVisitor func(uuid string, obj mo.ManagedEntity, field object.CustomFieldDefList) error
+type virtualMachineVisitor func(uuid string, obj mo.ManagedEntity, field object.CustomFieldDefList) error
 
-func VisitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, visitor VirtualMachineVisitor) error {
+func visitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, visitor virtualMachineVisitor) error {
 	ctx = flags.ContextWithPseudoFlagset(ctx, client, spec)
 	datacenterFlag, ctx := flags.NewDatacenterFlag(ctx)
 	dc, err := datacenterFlag.Datacenter()
@@ -135,16 +135,16 @@ func VisitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *api
 	return nil
 }
 
-func ShutDown(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (string, error) {
-	vm, err := shutdown(ctx, client, spec, machineName)
+func shutDownVM(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (string, error) {
+	vm, err := doShutdown(ctx, client, spec, machineName)
 	if err != nil {
 		return "", err
 	}
 	return vm.UUID(ctx), nil
 }
 
-func Delete(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (string, error) {
-	vm, err := shutdown(ctx, client, spec, machineName)
+func deleteVM(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (string, error) {
+	vm, err := doShutdown(ctx, client, spec, machineName)
 	if err != nil {
 		return "", err
 	}
@@ -161,8 +161,8 @@ func Delete(ctx context.Context, client *govmomi.Client, spec *api.VsphereProvid
 	return machineID, nil
 }
 
-func shutdown(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
-	vm, err := FindByIPath(ctx, client, spec, machineName)
+func doShutdown(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
+	vm, err := findByIPath(ctx, client, spec, machineName)
 	if err != nil {
 		return nil, err
 	}

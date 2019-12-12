@@ -19,7 +19,9 @@ package errors
 
 import "fmt"
 
+// MachineNotFoundError is used to indicate not found error in PluginSPI
 type MachineNotFoundError struct {
+	// Name is the machine name
 	Name string
 }
 
