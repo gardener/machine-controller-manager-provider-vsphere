@@ -29,7 +29,7 @@ import (
 	"github.com/golang/glog"
 )
 
-const pluginName = "cmi-plugin"
+const pluginName = "cmi-vsphere-plugin"
 
 var version = "0.1.0"
 

@@ -34,6 +34,14 @@ const (
 	SearchVirtualApps
 )
 
+type NotFoundError struct {
+	msg string
+}
+
+func (e *NotFoundError) Error() string {
+	return e.msg
+}
+
 type SearchFlag struct {
 	*ClientFlag
 	*DatacenterFlag
@@ -219,7 +227,7 @@ func (flag *SearchFlag) search() (object.Reference, error) {
 	}
 
 	if ref == nil {
-		return nil, fmt.Errorf("no such %s", flag.entity)
+		return nil, &NotFoundError{msg: fmt.Sprintf("no such %s", flag.entity)}
 	}
 
 	// set the InventoryPath field

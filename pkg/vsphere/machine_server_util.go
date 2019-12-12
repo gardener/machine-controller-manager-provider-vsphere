@@ -20,12 +20,13 @@ package vsphere
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang/glog"
-	"github.com/pkg/errors"
 	"strings"
 
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis/validation"
+	errors2 "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/errors"
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -93,12 +94,23 @@ func getSecretsFromSecretMap(secretMap map[string][]byte, checkUserData bool) (*
 }
 
 // encodeProviderID encodes a given provider-ID as per it's provider ID
-func encodeProviderID(providerID string) string {
-	return fmt.Sprintf("vsphere:///default/%s", providerID)
+func encodeProviderID(machineID string) string {
+	return fmt.Sprintf("vsphere:///default/%s", machineID)
 }
 
-func prepareInternalErrorf(err error, format string, args ...interface{}) error {
-	wrapped := errors.Wrap(err, fmt.Sprintf(format, args...))
+func prepareErrorf(err error, format string, args ...interface{}) error {
+	var (
+		code    codes.Code
+		wrapped error
+	)
+	switch err.(type) {
+	case *errors2.MachineNotFoundError:
+		code = codes.NotFound
+		wrapped = err
+	default:
+		code = codes.Internal
+		wrapped = errors.Wrap(err, fmt.Sprintf(format, args...))
+	}
 	glog.V(2).Infof(wrapped.Error())
-	return status.Error(codes.Internal, wrapped.Error())
+	return status.Error(code, wrapped.Error())
 }

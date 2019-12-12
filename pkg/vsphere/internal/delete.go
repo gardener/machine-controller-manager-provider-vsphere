@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	errors2 "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/errors"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/internal/flags"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi"
@@ -40,7 +41,16 @@ func FindByIPath(ctx context.Context, client *govmomi.Client, spec *api.VsphereP
 	}
 	ipath := fmt.Sprintf("/%s/%s/%s", spec.Datacenter, folder, machineName)
 	searchFlag.SetByInventoryPath(ipath)
-	return searchFlag.VirtualMachine()
+	obj, err := searchFlag.VirtualMachine()
+	if err != nil {
+		switch err.(type) {
+		case *flags.NotFoundError:
+			return nil, &errors2.MachineNotFoundError{Name: machineName}
+		default:
+			return nil, errors.Wrapf(err, "find by inventory path %q failed", ipath)
+		}
+	}
+	return obj, nil
 }
 
 type VirtualMachineVisitor func(uuid string, obj mo.ManagedEntity, field object.CustomFieldDefList) error
@@ -154,7 +164,7 @@ func Delete(ctx context.Context, client *govmomi.Client, spec *api.VsphereProvid
 func shutdown(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
 	vm, err := FindByIPath(ctx, client, spec, machineName)
 	if err != nil {
-		return nil, errors.Wrap(err, "find by machineName failed")
+		return nil, err
 	}
 	powerState, err := vm.PowerState(ctx)
 	if err != nil {

@@ -21,7 +21,7 @@ spec:
         - ./cmi-plugin
         - --endpoint=tcp://127.0.0.1:8080
       - name: machine-controller-manager
-        image: eu.gcr.io/gardener-project/gardener/machine-controller-manager:v0.25.0
+        image: eu.gcr.io/gardener-project/gardener/machine-controller-manager:1.0.0
         command:
           - ./machine-controller-manager
           - --v=2

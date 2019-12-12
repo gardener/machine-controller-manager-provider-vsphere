@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/errors"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/internal"
 	"sigs.k8s.io/yaml"
 )
@@ -58,7 +59,30 @@ func TestPluginSPIImpl(t *testing.T) {
 
 	spi := &internal.PluginSPIImpl{}
 	ctx := context.TODO()
-	machineID, err := spi.CreateMachine(ctx, cfg.MachineName, cfg.ProviderSpec, cfg.Secrets)
+
+	machineID, err := spi.GetMachineStatus(ctx, cfg.MachineName, cfg.ProviderSpec, cfg.Secrets)
+	if err == nil {
+		t.Errorf("Machine name %s already existing", cfg.MachineName)
+		return
+	}
+	switch err.(type) {
+	case *errors.MachineNotFoundError:
+		// expected
+	default:
+		t.Errorf("Unexpected error on GetMachineStatus")
+		return
+	}
+
+	machineID, err = spi.DeleteMachine(ctx, cfg.MachineName, cfg.ProviderSpec, cfg.Secrets)
+	switch err.(type) {
+	case *errors.MachineNotFoundError:
+		// expected
+	default:
+		t.Errorf("Unexpected error on DeleteMachine")
+		return
+	}
+
+	machineID, err = spi.CreateMachine(ctx, cfg.MachineName, cfg.ProviderSpec, cfg.Secrets)
 	if err != nil {
 		t.Errorf("CreateMachine failed with %s", err)
 		return

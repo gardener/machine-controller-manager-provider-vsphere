@@ -64,16 +64,16 @@ import (
 //
 func (ms *MachinePlugin) CreateMachine(ctx context.Context, req *cmi.CreateMachineRequest) (*cmi.CreateMachineResponse, error) {
 	// Log messages to track start of request
-	glog.V(2).Infof("Create machine request has been recieved for %q", req.MachineName)
+	glog.V(2).Infof("Create machine request has been received for %q", req.MachineName)
 
 	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, true)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "Create machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
+		return nil, prepareErrorf(err, "Create machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
 	}
 
 	machineID, err := ms.SPI.CreateMachine(ctx, req.MachineName, providerSpec, secrets)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "Create machine %q failed", req.MachineName)
+		return nil, prepareErrorf(err, "Create machine %q failed", req.MachineName)
 	}
 
 	response := &cmi.CreateMachineResponse{
@@ -104,15 +104,15 @@ func (ms *MachinePlugin) DeleteMachine(ctx context.Context, req *cmi.DeleteMachi
 
 	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, false)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "Delete machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
+		return nil, prepareErrorf(err, "Delete machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
 	}
 
 	machineID, err := ms.SPI.DeleteMachine(ctx, req.MachineName, providerSpec, secrets)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "Delete machine %q failed", req.MachineName)
+		return nil, prepareErrorf(err, "Delete machine %q failed", req.MachineName)
 	}
 
-	glog.V(2).Infof("VM %q for Machine %q was terminated succesfully", machineID, req.MachineName)
+	glog.V(2).Infof("VM %q for Machine %q was terminated succesfully", encodeProviderID(machineID), req.MachineName)
 
 	return &cmi.DeleteMachineResponse{}, nil
 }
@@ -138,18 +138,22 @@ func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *cmi.GetMachi
 
 	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, false)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "Machine status %q failed on decodeProviderSpecAndSecret", req.MachineName)
+		return nil, prepareErrorf(err, "Machine status %q failed on decodeProviderSpecAndSecret", req.MachineName)
 	}
 
 	machineID, err := ms.SPI.GetMachineStatus(ctx, req.MachineName, providerSpec, secrets)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "Machine status %q failed", req.MachineName)
+		return nil, prepareErrorf(err, "Machine status %q failed", req.MachineName)
 	}
 
-	return &cmi.GetMachineStatusResponse{
+	response := &cmi.GetMachineStatusResponse{
 		ProviderID: encodeProviderID(machineID),
 		NodeName:   req.MachineName,
-	}, nil
+	}
+
+	glog.V(2).Infof("Machine status: found VM %q for Machine: %q", response.ProviderID, req.MachineName)
+
+	return response, nil
 }
 
 // ListMachines lists all the machines possibilly created by a providerSpec
@@ -167,16 +171,16 @@ func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *cmi.GetMachi
 //
 func (ms *MachinePlugin) ListMachines(ctx context.Context, req *cmi.ListMachinesRequest) (*cmi.ListMachinesResponse, error) {
 	// Log messages to track start of request
-	glog.V(2).Infof("List machines request has been received for %q", req.ProviderSpec)
+	glog.V(2).Infof("List machines request has been received")
 
 	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, false)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "List machines failed on decodeProviderSpecAndSecret")
+		return nil, prepareErrorf(err, "List machines failed on decodeProviderSpecAndSecret")
 	}
 
 	machineIDList, err := ms.SPI.ListMachines(ctx, providerSpec, secrets)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "List machines failed")
+		return nil, prepareErrorf(err, "List machines failed")
 	}
 
 	machineList := map[string]string{}
@@ -185,6 +189,7 @@ func (ms *MachinePlugin) ListMachines(ctx context.Context, req *cmi.ListMachines
 		machineList[encodeProviderID(id)] = name
 	}
 
+	glog.V(2).Infof("List machines request for dc %s, folder %s found %d machines", providerSpec.Datacenter, providerSpec.Folder, len(machineList))
 	return &cmi.ListMachinesResponse{
 		MachineList: machineList,
 	}, nil
@@ -200,21 +205,16 @@ func (ms *MachinePlugin) ListMachines(ctx context.Context, req *cmi.ListMachines
 //
 func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *cmi.GetVolumeIDsRequest) (*cmi.GetVolumeIDsResponse, error) {
 	// Log messages to track start of request
-	glog.V(2).Infof("GetVolumeIDs request has been received for %q", req.PVSpecList)
+	glog.V(2).Infof("GetVolumeIDs request has been received (count=%d)")
+	glog.V(4).Infof("PVSpecList = %q", req.PVSpecList)
 
-	var (
-		volumeIDs   []string
-		volumeSpecs []*corev1.PersistentVolumeSpec
-	)
-
-	// Log messages to track start and end of request
-	glog.V(2).Infof("GetVolumeIDs request has been recieved for %q", req.PVSpecList)
-
+	var volumeSpecs []*corev1.PersistentVolumeSpec
 	err := json.Unmarshal(req.PVSpecList, &volumeSpecs)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	var volumeIDs []string
 	for i := range volumeSpecs {
 		spec := volumeSpecs[i]
 		if spec.VsphereVolume == nil {
@@ -225,7 +225,8 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *cmi.GetVolumeIDs
 		volumeIDs = append(volumeIDs, volumeID)
 	}
 
-	glog.V(2).Infof("GetVolumeIDs machines request has been processed successfully. \nList: %v", volumeIDs)
+	glog.V(2).Infof("GetVolumeIDs machines request has been processed successfully. ", len(volumeIDs))
+	glog.V(4).Infof("GetVolumeIDs volumneIDs: %v", volumeIDs)
 
 	Resp := &cmi.GetVolumeIDsResponse{
 		VolumeIDs: volumeIDs,
@@ -251,13 +252,12 @@ func (ms *MachinePlugin) ShutDownMachine(ctx context.Context, req *cmi.ShutDownM
 
 	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, false)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "ShutDown machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
-		return nil, err
+		return nil, prepareErrorf(err, "ShutDown machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
 	}
 
 	machineID, err := ms.SPI.ShutDownMachine(ctx, req.MachineName, providerSpec, secrets)
 	if err != nil {
-		return nil, prepareInternalErrorf(err, "ShutDown machine %q failed", req.MachineName)
+		return nil, prepareErrorf(err, "ShutDown machine %q failed", req.MachineName)
 	}
 
 	glog.V(2).Infof("VM %q for Machine %q was shutted down succesfully", machineID, req.MachineName)
