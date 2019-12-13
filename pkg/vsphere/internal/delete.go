@@ -53,7 +53,7 @@ func findByIPath(ctx context.Context, client *govmomi.Client, spec *api.VsphereP
 	return obj, nil
 }
 
-type virtualMachineVisitor func(uuid string, obj mo.ManagedEntity, field object.CustomFieldDefList) error
+type virtualMachineVisitor func(vm *object.VirtualMachine, obj mo.ManagedEntity, field object.CustomFieldDefList) error
 
 func visitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, visitor virtualMachineVisitor) error {
 	ctx = flags.ContextWithPseudoFlagset(ctx, client, spec)
@@ -95,12 +95,12 @@ func visitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *api
 	if err != nil {
 		return err
 	}
-	ids := make([]string, 0, len(refs))
+	vms := make([]*object.VirtualMachine, 0, len(refs))
 	morefs := make([]types.ManagedObjectReference, 0, len(refs))
 	for _, ref := range refs {
 		vm, ok := ref.(*object.VirtualMachine)
 		if ok {
-			ids = append(ids, vm.UUID(ctx))
+			vms = append(vms, vm)
 			morefs = append(morefs, vm.Reference())
 		}
 	}
@@ -124,9 +124,9 @@ func visitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *api
 		return errors.Wrap(err, "Field failed")
 	}
 
-	for i := range ids {
+	for i := range vms {
 		obj := objMap[morefs[i]]
-		err := visitor(ids[i], obj, field)
+		err := visitor(vms[i], obj, field)
 		if err != nil {
 			return errors.Wrapf(err, "visiting vm %s failed", obj.Name)
 		}

@@ -123,7 +123,7 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 		return machineList, nil
 	}
 
-	visitor := func(uuid string, obj mo.ManagedEntity, field object.CustomFieldDefList) error {
+	visitor := func(vm *object.VirtualMachine, obj mo.ManagedEntity, field object.CustomFieldDefList) error {
 		matchedCluster := false
 		matchedRole := false
 		for _, cv := range obj.CustomValue {
@@ -136,6 +136,7 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 			}
 		}
 		if matchedCluster && matchedRole {
+			uuid := vm.UUID(ctx)
 			machineList[uuid] = obj.Name
 		}
 		return nil
