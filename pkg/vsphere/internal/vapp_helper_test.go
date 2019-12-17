@@ -28,7 +28,7 @@ const expectedContent = `{
   "networkd":{"units":[{"contents":"[Match]\nName=ens192\n\n[Network]\nDHCP=yes\nLinkLocalAddressing=no\nIPv6AcceptRA=no\n","name":"00-ens192.network"}]},
   "passwd":{"users":[{"name":"core","passwordHash":"$1$9H6.uffe$e5XfhfWO4EcT8JdUvzEOT0","sshAuthorizedKeys":["ssh1","ssh2"]}]},
   "storage": {
-	"directories":[{"filesystem":"root","path":"/var/lib/coreos-install"}],
+	"directories":[{"filesystem":"root","path":"/var/lib/coreos-install","mode":493}],
 	"files":[
 	  {"filesystem":"root","path":"/etc/hostname","contents":{"source":"data:,foo"},"mode":420},
 	  {"filesystem":"root","path":"/var/lib/coreos-install/user_data","contents":{"source":"data:text/plain;charset=utf-8;base64,XYZ"},"mode":420}
@@ -41,13 +41,14 @@ const expectedContent = `{
 func TestCoreOSIgnition(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 
-	config := &coreosConfig{
+	config := &ignitionConfig{
 		PasswdHash:     "$1$9H6.uffe$e5XfhfWO4EcT8JdUvzEOT0",
 		Hostname:       "foo",
 		SSHKeys:        []string{"ssh1", "ssh2"},
 		UserdataBase64: "XYZ",
+		InstallPath:    "/var/lib/coreos-install",
 	}
-	content, err := coreosIgnition(config)
+	content, err := ignitionFile(config)
 	if err != nil {
 		t.Errorf("coreosIgnition failed with %s", err)
 	}

@@ -26,23 +26,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-type coreosConfig struct {
+type ignitionConfig struct {
 	PasswdHash     string
 	Hostname       string
 	SSHKeys        []string
 	UserdataBase64 string
+	InstallPath    string
 }
 
-func coreosIgnition(config *coreosConfig) (string, error) {
+func ignitionFile(config *ignitionConfig) (string, error) {
 	ignitionTemplate := `{
   "ignition": {"config":{},"timeouts":{},"version":"2.1.0"},
   "networkd":{"units":[{"contents":"[Match]\nName=ens192\n\n[Network]\nDHCP=yes\nLinkLocalAddressing=no\nIPv6AcceptRA=no\n","name":"00-ens192.network"}]},
   "passwd":{"users":[{"name":"core","passwordHash":"{{.PasswdHash}}","sshAuthorizedKeys":[{{range $index,$elem := .SSHKeys}}{{if $index}},{{end}}"{{$elem}}"{{end}}]}]},
   "storage": {
-	"directories":[{"filesystem":"root","path":"/var/lib/coreos-install"}],
+	"directories":[{"filesystem":"root","path":"{{.InstallPath}}","mode":493}],
 	"files":[
 	  {"filesystem":"root","path":"/etc/hostname","contents":{"source":"data:,{{.Hostname}}"},"mode":420},
-	  {"filesystem":"root","path":"/var/lib/coreos-install/user_data","contents":{"source":"data:text/plain;charset=utf-8;base64,{{.UserdataBase64}}"},"mode":420}
+	  {"filesystem":"root","path":"{{.InstallPath}}/user_data","contents":{"source":"data:text/plain;charset=utf-8;base64,{{.UserdataBase64}}"},"mode":420}
 	]
   },
   "systemd":{}

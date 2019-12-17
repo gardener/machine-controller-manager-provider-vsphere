@@ -175,11 +175,12 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 		switch guestID {
 		case "coreos64Guest":
 			// provide ignition as VApp
-			coreosConfig := &coreosConfig{
+			config := &ignitionConfig{
 				PasswdHash:     "*",
 				Hostname:       cmd.name,
 				UserdataBase64: base64.StdEncoding.EncodeToString([]byte(cmd.userData)),
 				SSHKeys:        sshkeys,
+				InstallPath:    "/var/lib/coreos-install",
 			}
 			// Login to machine happens normally via ssh and provided ssh keys
 			// For debugging proposes login on machine via vsphere web console might be helpful.
@@ -187,12 +188,37 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 			// e.g. use `openssl passwd -1` to generate the hash
 			passwordHash := os.Getenv(envPasswordHash)
 			if passwordHash != "" {
-				coreosConfig.PasswdHash = passwordHash
+				config.PasswdHash = passwordHash
 			}
-			ignitionContent, err := coreosIgnition(coreosConfig)
+			ignitionContent, err := ignitionFile(config)
 			glog.V(4).Infof("ignitionContent: |%s|", ignitionContent)
 			if err != nil {
 				return errors.Wrap(err, "setting VApp (coreos64)")
+			}
+			vapp = &api.VApp{Properties: map[string]string{"guestinfo.coreos.config.data": ignitionContent}}
+		case "other4xLinux64Guest":
+			// experimental support for flatcar
+			// other4xLinux64Guest is used as label for flatcar
+			// provide ignition as VApp
+			config := &ignitionConfig{
+				PasswdHash:     "*",
+				Hostname:       cmd.name,
+				UserdataBase64: base64.StdEncoding.EncodeToString([]byte(cmd.userData)),
+				SSHKeys:        sshkeys,
+				InstallPath:    "/var/lib/flatcar-install",
+			}
+			// Login to machine happens normally via ssh and provided ssh keys
+			// For debugging proposes login on machine via vsphere web console might be helpful.
+			// In this case, the password hash can be set as environmental variable for the machine controller.
+			// e.g. use `openssl passwd -1` to generate the hash
+			passwordHash := os.Getenv(envPasswordHash)
+			if passwordHash != "" {
+				config.PasswdHash = passwordHash
+			}
+			ignitionContent, err := ignitionFile(config)
+			glog.V(4).Infof("ignitionContent: |%s|", ignitionContent)
+			if err != nil {
+				return errors.Wrap(err, "setting VApp (flatcar64)")
 			}
 			vapp = &api.VApp{Properties: map[string]string{"guestinfo.coreos.config.data": ignitionContent}}
 		default:
