@@ -19,6 +19,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -32,6 +33,8 @@ import (
 // PluginSPIImpl is the real implementation of PluginSPI interface
 // that makes the calls to the provider SDK
 type PluginSPIImpl struct{}
+
+const providerPrefix = "vsphere://"
 
 // CreateMachine creates a VM by cloning from a template
 func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
@@ -47,56 +50,84 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 		return "", err
 	}
 	machineID := cmd.Clone.UUID(ctx)
-	return machineID, nil
+	providerID := spi.encodeProviderID(providerSpec.Region, machineID)
+	return providerID, nil
+}
+
+func (spi *PluginSPIImpl) encodeProviderID(region, machineID string) string {
+	if machineID == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s%s/%s", providerPrefix, region, machineID)
+}
+
+func (spi *PluginSPIImpl) decodeProviderID(providerID string) (region, machineID string) {
+	if !strings.HasPrefix(providerID, providerPrefix) {
+		return
+	}
+	parts := strings.Split(providerID[len(providerPrefix):], "/")
+	if len(parts) != 2 {
+		return
+	}
+	region = parts[0]
+	machineID = parts[1]
+	return
 }
 
 // DeleteMachine deletes a VM by name
-func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
+func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return "", err
 	}
 	defer client.Logout(ctx)
 
-	machineID, err := deleteVM(ctx, client, providerSpec, machineName)
+	_, machineID := spi.decodeProviderID(providerID)
+	foundMachineID, err := deleteVM(ctx, client, providerSpec, machineName, machineID)
 	if err != nil {
 		return "", err
 	}
 
-	return machineID, nil
+	foundProviderID := spi.encodeProviderID(providerSpec.Region, foundMachineID)
+	return foundProviderID, nil
 }
 
 // ShutDownMachine shuts down a machine by name
-func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
+func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return "", err
 	}
 	defer client.Logout(ctx)
 
-	machineID, err := shutDownVM(ctx, client, providerSpec, machineName)
+	_, machineID := spi.decodeProviderID(providerID)
+	foundMachineID, err := shutDownVM(ctx, client, providerSpec, machineName, machineID)
 	if err != nil {
 		return "", err
 	}
 
-	return machineID, nil
+	foundProviderID := spi.encodeProviderID(providerSpec.Region, foundMachineID)
+	return foundProviderID, nil
 }
 
 // GetMachineStatus checks for existence of VM by name
-func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
+func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return "", err
 	}
 	defer client.Logout(ctx)
 
-	vm, err := findByIPath(ctx, client, providerSpec, machineName)
+	_, machineID := spi.decodeProviderID(providerID)
+	vm, err := findVM(ctx, client, providerSpec, machineName, machineID)
 	if err != nil {
 		return "", err
 	}
 
-	machineID := vm.UUID(ctx)
-	return machineID, nil
+	foundMachineID := vm.UUID(ctx)
+
+	foundProviderID := spi.encodeProviderID(providerSpec.Region, foundMachineID)
+	return foundProviderID, nil
 }
 
 // ListMachines lists all VMs in the DC or folder
@@ -137,7 +168,8 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 		}
 		if matchedCluster && matchedRole {
 			uuid := vm.UUID(ctx)
-			machineList[uuid] = obj.Name
+			providerID := spi.encodeProviderID(providerSpec.Region, uuid)
+			machineList[providerID] = obj.Name
 		}
 		return nil
 	}

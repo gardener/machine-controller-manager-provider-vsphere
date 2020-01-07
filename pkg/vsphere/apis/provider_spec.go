@@ -17,11 +17,11 @@ package api
 // VsphereProviderSpec contains the fields of
 // provider spec that the plugin expects
 type VsphereProviderSpec struct {
-	// APIVersion mentions the APIVersion of the object being passed
-	APIVersion string
+	// Region is the vSphere region
+	Region string `json:"region"`
 
 	// Datacenter is the vSphere data center
-	Datacenter string `json:"datacenter,omitempty"`
+	Datacenter string `json:"datacenter"`
 
 	// DatastoreCluster is the data store cluster to use (either DatastoreCluster or Datastore must be specified)
 	// +optional

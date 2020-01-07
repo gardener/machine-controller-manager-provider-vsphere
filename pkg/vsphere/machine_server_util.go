@@ -93,11 +93,6 @@ func getSecretsFromSecretMap(secretMap map[string][]byte, checkUserData bool) (*
 	return &secrets, nil
 }
 
-// encodeProviderID encodes a given provider-ID as per it's provider ID
-func encodeProviderID(machineID string) string {
-	return fmt.Sprintf("vsphere:///default/%s", machineID)
-}
-
 func prepareErrorf(err error, format string, args ...interface{}) error {
 	var (
 		code    codes.Code

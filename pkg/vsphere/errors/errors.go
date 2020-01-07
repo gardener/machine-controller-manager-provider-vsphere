@@ -23,8 +23,10 @@ import "fmt"
 type MachineNotFoundError struct {
 	// Name is the machine name
 	Name string
+	// MachineID is the machine uuid
+	MachineID string
 }
 
 func (e *MachineNotFoundError) Error() string {
-	return fmt.Sprintf("machine %s not found", e.Name)
+	return fmt.Sprintf("machine name=%s, uuid=%s not found", e.Name, e.MachineID)
 }

@@ -33,12 +33,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// NOTE
-//
-// The basic working of the controller will work with just implementing the CreateMachine() & DeleteMachine() methods.
-// You can first implement these two methods and check the working of the controller.
-// Once this works you can implement the rest of the methods.
-
 // CreateMachine handles a machine creation request
 // REQUIRED METHOD
 //
@@ -71,15 +65,15 @@ func (ms *MachinePlugin) CreateMachine(ctx context.Context, req *cmi.CreateMachi
 		return nil, prepareErrorf(err, "Create machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
 	}
 
-	machineID, err := ms.SPI.CreateMachine(ctx, req.MachineName, providerSpec, secrets)
+	providerID, err := ms.SPI.CreateMachine(ctx, req.MachineName, providerSpec, secrets)
 	if err != nil {
 		return nil, prepareErrorf(err, "Create machine %q failed", req.MachineName)
 	}
 
 	response := &cmi.CreateMachineResponse{
-		ProviderID:     encodeProviderID(machineID),
+		ProviderID:     providerID,
 		NodeName:       req.MachineName,
-		LastKnownState: []byte(fmt.Sprintf("Created %s", machineID)),
+		LastKnownState: []byte(fmt.Sprintf("Created %s", providerID)),
 	}
 
 	glog.V(2).Infof("VM with Provider-ID: %q created for Machine: %q", response.ProviderID, req.MachineName)
@@ -90,6 +84,7 @@ func (ms *MachinePlugin) CreateMachine(ctx context.Context, req *cmi.CreateMachi
 //
 // REQUEST PARAMETERS (cmi.DeleteMachineRequest)
 // MachineName          string              Contains the name of the machine object for the backing VM(s) have to be deleted
+// ProviderID           string              Contains the unique identification of the VM at the cloud provider
 // ProviderSpec         bytes(blob)         Template/Configuration of the machine to be deleted is given by at the provider
 // Secrets              map<string,bytes>   (Optional) Contains a map from string to string contains any cloud specific secrets that can be used by the provider
 // LastKnownState       bytes(blob)         (Optional) Last known state of VM during last operation. Could be helpful to continue operation from previous state
@@ -107,12 +102,12 @@ func (ms *MachinePlugin) DeleteMachine(ctx context.Context, req *cmi.DeleteMachi
 		return nil, prepareErrorf(err, "Delete machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
 	}
 
-	machineID, err := ms.SPI.DeleteMachine(ctx, req.MachineName, providerSpec, secrets)
+	providerID, err := ms.SPI.DeleteMachine(ctx, req.MachineName, req.ProviderID, providerSpec, secrets)
 	if err != nil {
 		return nil, prepareErrorf(err, "Delete machine %q failed", req.MachineName)
 	}
 
-	glog.V(2).Infof("VM %q for Machine %q was terminated succesfully", encodeProviderID(machineID), req.MachineName)
+	glog.V(2).Infof("VM %q for Machine %q was terminated succesfully", providerID, req.MachineName)
 
 	return &cmi.DeleteMachineResponse{}, nil
 }
@@ -122,6 +117,7 @@ func (ms *MachinePlugin) DeleteMachine(ctx context.Context, req *cmi.DeleteMachi
 //
 // REQUEST PARAMETERS (cmi.GetMachineStatusRequest)
 // MachineName          string              Contains the name of the machine object for whose status is to be retrived
+// ProviderID           string              Contains the unique identification of the VM at the cloud provider
 // ProviderSpec         bytes(blob)         Template/Configuration of the machine whose status is to be retrived
 // Secrets              map<string,bytes>   (Optional) Contains a map from string to string contains any cloud specific secrets that can be used by the provider
 //
@@ -141,13 +137,13 @@ func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *cmi.GetMachi
 		return nil, prepareErrorf(err, "Machine status %q failed on decodeProviderSpecAndSecret", req.MachineName)
 	}
 
-	machineID, err := ms.SPI.GetMachineStatus(ctx, req.MachineName, providerSpec, secrets)
+	providerID, err := ms.SPI.GetMachineStatus(ctx, req.MachineName, req.ProviderID, providerSpec, secrets)
 	if err != nil {
 		return nil, prepareErrorf(err, "Machine status %q failed", req.MachineName)
 	}
 
 	response := &cmi.GetMachineStatusResponse{
-		ProviderID: encodeProviderID(machineID),
+		ProviderID: providerID,
 		NodeName:   req.MachineName,
 	}
 
@@ -178,15 +174,9 @@ func (ms *MachinePlugin) ListMachines(ctx context.Context, req *cmi.ListMachines
 		return nil, prepareErrorf(err, "List machines failed on decodeProviderSpecAndSecret")
 	}
 
-	machineIDList, err := ms.SPI.ListMachines(ctx, providerSpec, secrets)
+	machineList, err := ms.SPI.ListMachines(ctx, providerSpec, secrets)
 	if err != nil {
 		return nil, prepareErrorf(err, "List machines failed")
-	}
-
-	machineList := map[string]string{}
-
-	for id, name := range machineIDList {
-		machineList[encodeProviderID(id)] = name
 	}
 
 	glog.V(2).Infof("List machines request for dc %s, folder %s found %d machines", providerSpec.Datacenter, providerSpec.Folder, len(machineList))
@@ -238,6 +228,7 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *cmi.GetVolumeIDs
 // OPTIONAL METHOD
 //
 // REQUEST PARAMETERS (cmi.ShutDownMachineRequest)
+// ProviderID           string              Contains the unique identification of the VM at the cloud provider
 // ProviderSpec          bytes(blob)         Template/Configuration of the machine that wouldn've been created by this ProviderSpec (Machine Class)
 // Secrets               map<string,bytes>   (Optional) Contains a map from string to string contains any cloud specific secrets that can be used by the provider
 // LastKnownState        bytes(blob)        (Optional) Last known state of VM during last operation. Could be helpful to continue operation from previous state
@@ -255,12 +246,12 @@ func (ms *MachinePlugin) ShutDownMachine(ctx context.Context, req *cmi.ShutDownM
 		return nil, prepareErrorf(err, "ShutDown machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
 	}
 
-	machineID, err := ms.SPI.ShutDownMachine(ctx, req.MachineName, providerSpec, secrets)
+	providerID, err := ms.SPI.ShutDownMachine(ctx, req.MachineName, req.ProviderID, providerSpec, secrets)
 	if err != nil {
 		return nil, prepareErrorf(err, "ShutDown machine %q failed", req.MachineName)
 	}
 
-	glog.V(2).Infof("VM %q for Machine %q was shutted down succesfully", machineID, req.MachineName)
+	glog.V(2).Infof("VM %q for Machine %q was shutted down succesfully", providerID, req.MachineName)
 
-	return &cmi.ShutDownMachineResponse{LastKnownState: []byte(fmt.Sprintf("Shutted down %s", machineID))}, nil
+	return &cmi.ShutDownMachineResponse{LastKnownState: []byte(fmt.Sprintf("Shutted down %s", providerID))}, nil
 }

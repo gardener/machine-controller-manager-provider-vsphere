@@ -31,6 +31,13 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+func findVM(ctx context.Context, client *govmomi.Client, providerSpec *api.VsphereProviderSpec, machineName, machineID string) (*object.VirtualMachine, error) {
+	if machineID != "" {
+		return findByUUID(ctx, client, providerSpec, machineID)
+	}
+	return findByIPath(ctx, client, providerSpec, machineName)
+}
+
 func findByIPath(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
 	ctx = flags.ContextWithPseudoFlagset(ctx, client, spec)
 	searchFlag, ctx := flags.NewSearchFlag(ctx, flags.SearchVirtualMachines)
@@ -48,6 +55,23 @@ func findByIPath(ctx context.Context, client *govmomi.Client, spec *api.VsphereP
 			return nil, &errors2.MachineNotFoundError{Name: machineName}
 		default:
 			return nil, errors.Wrapf(err, "find by inventory path %q failed", ipath)
+		}
+	}
+	return obj, nil
+}
+
+func findByUUID(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineID string) (*object.VirtualMachine, error) {
+	ctx = flags.ContextWithPseudoFlagset(ctx, client, spec)
+	searchFlag, ctx := flags.NewSearchFlag(ctx, flags.SearchVirtualMachines)
+
+	searchFlag.SetByUUID(machineID)
+	obj, err := searchFlag.VirtualMachine()
+	if err != nil {
+		switch err.(type) {
+		case *flags.NotFoundError:
+			return nil, &errors2.MachineNotFoundError{MachineID: machineID}
+		default:
+			return nil, errors.Wrapf(err, "find by uuid %s failed", machineID)
 		}
 	}
 	return obj, nil
@@ -135,20 +159,20 @@ func visitVirtualMachines(ctx context.Context, client *govmomi.Client, spec *api
 	return nil
 }
 
-func shutDownVM(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (string, error) {
-	vm, err := doShutdown(ctx, client, spec, machineName)
+func shutDownVM(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName, machineID string) (string, error) {
+	vm, err := doShutdown(ctx, client, spec, machineName, machineID)
 	if err != nil {
 		return "", err
 	}
 	return vm.UUID(ctx), nil
 }
 
-func deleteVM(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (string, error) {
-	vm, err := doShutdown(ctx, client, spec, machineName)
+func deleteVM(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName, machineID string) (string, error) {
+	vm, err := doShutdown(ctx, client, spec, machineName, machineID)
 	if err != nil {
 		return "", err
 	}
-	machineID := vm.UUID(ctx)
+	foundMachineID := vm.UUID(ctx)
 
 	task, err := vm.Destroy(ctx)
 	if err != nil {
@@ -158,11 +182,11 @@ func deleteVM(ctx context.Context, client *govmomi.Client, spec *api.VsphereProv
 	if err != nil {
 		return "", errors.Wrap(err, "Destroy failed")
 	}
-	return machineID, nil
+	return foundMachineID, nil
 }
 
-func doShutdown(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName string) (*object.VirtualMachine, error) {
-	vm, err := findByIPath(ctx, client, spec, machineName)
+func doShutdown(ctx context.Context, client *govmomi.Client, spec *api.VsphereProviderSpec, machineName, machineID string) (*object.VirtualMachine, error) {
+	vm, err := findVM(ctx, client, spec, machineName, machineID)
 	if err != nil {
 		return nil, err
 	}

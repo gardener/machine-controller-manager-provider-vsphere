@@ -34,6 +34,8 @@ github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/gardener/machine-spec v0.0.0-20191122115249-3c5d92860015 h1:vXOKHRS7FaljgKHlqUL+Af0HYCdnR397v2mAmy/9NuE=
 github.com/gardener/machine-spec v0.0.0-20191122115249-3c5d92860015/go.mod h1:JFBJcmxgovWQjBGeYUlVkrqmB5K6iZl9UKWf1I9EOVo=
+github.com/gardener/machine-spec v0.5.0 h1:YbmypnjmqkHEM9xJRz4HB9SGCeoEd3fUxFoiJzGkttA=
+github.com/gardener/machine-spec v0.5.0/go.mod h1:JFBJcmxgovWQjBGeYUlVkrqmB5K6iZl9UKWf1I9EOVo=
 github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-logr/logr v0.1.0/go.mod h1:ixOQHD9gLJUVQQ2ZOR7zLEifBX6tGkNJF4QyIY7sIas=
 github.com/go-openapi/jsonpointer v0.0.0-20160704185906-46af16f9f7b1 h1:wSt/4CYxs70xbATrGXhokKF1i0tZjENLOo1ioIO13zk=
