@@ -27,12 +27,15 @@ PACKAGES="$(go list -e ./... | grep -vE '/vendor/|/internal/flags')"
 LINT_FOLDERS="$(echo ${PACKAGES} | sed "s|github.com/gardener/machine-controller-manager-provider-vsphere|.|g")"
 
 # Execute static code checks.
+echo "Running go vet..."
 go vet ${PACKAGES}
 
 # Execute automatic code formatting directive.
-go fmt ${PACKAGES}
+echo "Running gofmt..."
+gofmt -l -w -s ${PACKAGES_DIRS}
 
 # Execute lint checks.
+echo "Running golint..."
 for package in ${LINT_FOLDERS}; do
     golint -set_exit_status $(find $package -maxdepth 1 -name "*.go" | grep -vE 'zz_generated|_test.go')
 done

@@ -31,10 +31,8 @@ import (
 
 const pluginName = "cmi-vsphere-plugin"
 
-var version = "0.1.0"
-
 // NewPlugin returns a newly created plugin object
-func NewPlugin(endpoint string) *Plugin {
+func NewPlugin(endpoint, version string) *Plugin {
 	glog.V(1).Infof("Plugin: %v version: %v", pluginName, version)
 
 	p := &Plugin{}

@@ -15,20 +15,8 @@
 PROVIDER_NAME       := Vsphere
 PROJECT_NAME        := gardener
 BINARY_PATH         := bin/
-IMAGE_REPOSITORY    := eu.gcr.io/gardener-project/test/machine-controller-manager-provider-vsphere
+IMAGE_REPOSITORY    := eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-vsphere
 IMAGE_TAG           := $(shell cat VERSION)
-
-#########################################
-# Rules for running helper scripts
-#########################################
-
-.PHONY: rename-provider
-rename-provider:
-	@./hack/rename-provider ${PROVIDER_NAME}
-
-.PHONY: rename-project
-rename-project:
-	@./hack/rename-project ${PROJECT_NAME}
 
 #########################################
 # Rules for re-vendoring
@@ -38,10 +26,6 @@ rename-project:
 revendor:
 	@env GO111MODULE=on go mod vendor -v
 	@env GO111MODULE=on go mod tidy -v
-
-.PHONY: update-dependencies
-update-dependencies:
-	@env GO111MODULE=on go get -u
 
 #########################################
 # Rules for testing
@@ -69,6 +53,7 @@ build-local:
 .PHONY: build
 build:
 	@.ci/build
+
 .PHONY: docker-image
 docker-image:
 	@if [[ ! -f ${BINARY_PATH}/rel/cmi-plugin ]]; then echo "No binary found. Please run 'make build'"; false; fi

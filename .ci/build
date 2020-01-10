@@ -18,6 +18,8 @@ set -e
 
 source "$(dirname ${0})/setupenv.src"
 
+VERSION=$(cat VERSION)
+
 ###############################################################################
 
 # If no LOCAL_BUILD environment variable is set, we configure the `go build` command
@@ -28,6 +30,7 @@ if [[ -z "$LOCAL_BUILD" ]]; then
     -a \
     -v \
     -o ${BINARY_PATH}/rel/cmi-plugin \
+    -ldflags "-X main.version=$VERSION-$(git rev-parse HEAD)" \
     app/controller/cmi-plugin.go
 
 # If the LOCAL_BUILD environment variable is set, we simply run `go build`.
@@ -36,5 +39,6 @@ else
     -mod=vendor \
     -v \
     -o ${BINARY_PATH}/cmi-plugin \
+    -ldflags "-X main.version=$VERSION-$(git rev-parse HEAD)" \
     app/controller/cmi-plugin.go
 fi

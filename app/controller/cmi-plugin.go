@@ -31,6 +31,7 @@ import (
 )
 
 var (
+	version  string
 	endpoint string
 )
 
@@ -73,6 +74,6 @@ func main() {
 }
 
 func handle() {
-	d := vsphere.NewPlugin(endpoint)
+	d := vsphere.NewPlugin(endpoint, version)
 	d.Run()
 }
