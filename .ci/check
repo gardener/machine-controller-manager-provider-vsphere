@@ -24,7 +24,7 @@ export GOFLAGS=-mod=vendor
 
 ###############################################################################
 PACKAGES="$(go list -e ./... | grep -vE '/vendor/|/internal/flags')"
-LINT_FOLDERS="$(echo ${PACKAGES} | sed "s|github.com/gardener/machine-controller-manager-provider-vsphere|.|g")"
+PACKAGES_DIRS="$(echo ${PACKAGES} | sed "s|github.com/gardener/machine-controller-manager-provider-vsphere|.|g")"
 
 # Execute static code checks.
 echo "Running go vet..."
@@ -36,7 +36,7 @@ gofmt -l -w -s ${PACKAGES_DIRS}
 
 # Execute lint checks.
 echo "Running golint..."
-for package in ${LINT_FOLDERS}; do
+for package in ${PACKAGES_DIRS}; do
     golint -set_exit_status $(find $package -maxdepth 1 -name "*.go" | grep -vE 'zz_generated|_test.go')
 done
 echo "Check script has passed successfully"
