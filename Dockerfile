@@ -1,5 +1,19 @@
-FROM alpine:3.10
+#############      builder                                  #############
+FROM golang:1.13.5 AS builder
 
-COPY bin/rel/cmi-plugin /cmi-plugin
+WORKDIR /go/src/github.com/gardener/machine-controller-manager-provider-vsphere
+COPY . .
+
+RUN .ci/build
+
+#############      base                                     #############
+FROM alpine:3.11.2 as base
+
+RUN apk add --update bash curl tzdata
 WORKDIR /
-ENTRYPOINT ["/cmi-plugin"]
+
+#############      machine-controller               #############
+FROM base AS machine-controller
+
+COPY --from=builder /go/src/github.com/gardener/machine-controller-manager-provider-vsphere/bin/rel/machine-controller /machine-controller
+ENTRYPOINT ["/machine-controller"]

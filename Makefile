@@ -17,6 +17,29 @@ PROJECT_NAME        := gardener
 BINARY_PATH         := bin/
 IMAGE_REPOSITORY    := eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-vsphere
 IMAGE_TAG           := $(shell cat VERSION)
+CONTROL_NAMESPACE   := default
+CONTROL_KUBECONFIG  := dev/target-kubeconfig.yaml
+TARGET_KUBECONFIG   := dev/target-kubeconfig.yaml
+
+#########################################
+# Rules for starting machine-controller locally
+#########################################
+
+.PHONY: start
+start:
+	@GO111MODULE=on go run \
+			cmd/machine-controller/main.go \
+			--control-kubeconfig=$(CONTROL_KUBECONFIG) \
+			--target-kubeconfig=$(TARGET_KUBECONFIG) \
+			--namespace=$(CONTROL_NAMESPACE) \
+			--machine-creation-timeout=20m \
+			--machine-drain-timeout=5m \
+			--machine-health-timeout=10m \
+			--machine-pv-detach-timeout=2m \
+			--machine-safety-apiserver-statuscheck-timeout=30s \
+			--machine-safety-apiserver-statuscheck-period=1m \
+			--machine-safety-orphan-vms-period=30m \
+			--v=3
 
 #########################################
 # Rules for re-vendoring
@@ -66,8 +89,8 @@ docker-push:
 
 .PHONY: rename-binaries
 rename-binaries:
-	@if [[ -f bin/cmi-plugin ]]; then cp bin/cmi-plugin cmi-plugin-darwin-amd64; fi
-	@if [[ -f bin/rel/cmi-plugin ]]; then cp bin/rel/cmi-plugin cmi-plugin-linux-amd64; fi
+	@if [[ -f bin/machine-controller ]]; then cp bin/machine-controller machine-controller-darwin-amd64; fi
+	@if [[ -f bin/rel/machine-controller ]]; then cp bin/rel/machine-controller machine-controller-linux-amd64; fi
 
 .PHONY: clean
 clean:
