@@ -21,10 +21,11 @@ import (
 	"strings"
 
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // ValidateVsphereProviderSpec validates Vsphere provider spec
-func ValidateVsphereProviderSpec(spec *api.VsphereProviderSpec, secrets *api.Secrets) []error {
+func ValidateVsphereProviderSpec(spec *api.VsphereProviderSpec, secrets *corev1.Secret) []error {
 	var allErrs []error
 
 	if "" == spec.Datastore && "" == spec.DatastoreCluster {
@@ -69,20 +70,26 @@ func validateSpecTags(tags map[string]string) []error {
 	return allErrs
 }
 
-func validateSecrets(reference *api.Secrets) []error {
+func validateSecrets(secret *corev1.Secret) []error {
+
+	_, hostExists := secret.Data["vsphereHost"]
+	_, usernameExists := secret.Data["vsphereUsername"]
+	_, passwordExists := secret.Data["vspherePassword"]
+	_, userDataExists := secret.Data["userData"]
 	var allErrs []error
-	if "" == reference.VsphereHost {
+
+	if !hostExists {
 		allErrs = append(allErrs, fmt.Errorf("Secret vsphereHost is required field"))
 	}
-	if "" == reference.VsphereUsername {
+	if !usernameExists {
 		allErrs = append(allErrs, fmt.Errorf("Secret vsphereUsername is required field"))
 	}
-	if "" == reference.VspherePassword {
+	if !passwordExists {
 		allErrs = append(allErrs, fmt.Errorf("Secret vspherePassword is required field"))
 	}
-
-	if "" == reference.UserData {
+	if !userDataExists {
 		allErrs = append(allErrs, fmt.Errorf("Secret userData is required field"))
 	}
+
 	return allErrs
 }

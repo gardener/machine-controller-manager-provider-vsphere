@@ -23,86 +23,32 @@ package vsphere
 
 import (
 	"context"
-	cmicommon "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/cmicommon"
+
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/internal"
-	"github.com/golang/glog"
+	corev1 "k8s.io/api/core/v1"
 )
-
-const pluginName = "cmi-vsphere-plugin"
-
-// NewPlugin returns a newly created plugin object
-func NewPlugin(endpoint, version string) *Plugin {
-	glog.V(1).Infof("Plugin: %v version: %v", pluginName, version)
-
-	p := &Plugin{}
-	p.endpoint = endpoint
-	cmiPlugin := cmicommon.NewDefaultPlugin(pluginName, version)
-
-	// TODO MachineService Capabilities
-	// cmiPlugin.AddControllerServiceCapabilities([]cmi.ControllerServiceCapability_RPC_Type{cmi.ControllerServiceCapability_RPC_UNKNOWN})
-	p.CMIPlugin = cmiPlugin
-
-	return p
-}
-
-// Run starts a new gRPC server to start the plugin
-func (p *Plugin) Run() {
-	s := cmicommon.NewNonBlockingGRPCServer()
-	s.Start(
-		p.endpoint,
-		NewIdentityPlugin(p, &internal.PluginSPIImpl{}),
-		NewMachinePlugin(p, &internal.PluginSPIImpl{}),
-	)
-	s.Wait()
-}
 
 // PluginSPI provides an interface to deal with cloud provider session
 // You can optionally enhance this interface to add interface methods here
 // You can use it to mock cloud provider calls
 type PluginSPI interface {
-	CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (providerID string, err error)
-	DeleteMachine(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (foundProviderID string, err error)
-	GetMachineStatus(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (foundProviderID string, err error)
-	ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (providerIDList map[string]string, err error)
-	ShutDownMachine(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (foundProviderID string, err error)
+	CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (providerID string, err error)
+	DeleteMachine(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
+	GetMachineStatus(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
+	ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (providerIDList map[string]string, err error)
+	ShutDownMachine(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
 }
 
 // MachinePlugin implements the cmi.MachineServer
 // It also implements the pluginSPI interface
 type MachinePlugin struct {
-	*cmicommon.DefaultMachineServer
 	SPI PluginSPI
 }
 
-// NewMachinePlugin returns a new MachinePlugin
-func NewMachinePlugin(p *Plugin, spi PluginSPI) *MachinePlugin {
+// NewVspherePlugin returns a new vSphere p
+func NewVspherePlugin() *MachinePlugin {
 	return &MachinePlugin{
-		DefaultMachineServer: cmicommon.NewDefaultMachineServer(p.CMIPlugin),
-		SPI:                  spi,
+		SPI: &internal.PluginSPIImpl{},
 	}
-}
-
-// IdentityPlugin implements the cmi.IdentityServer clients
-type IdentityPlugin struct {
-	*cmicommon.DefaultIdentityServer
-}
-
-// NewIdentityPlugin returns a new IdentityPlugin
-func NewIdentityPlugin(p *Plugin, spi PluginSPI) *IdentityPlugin {
-	return &IdentityPlugin{
-		DefaultIdentityServer: cmicommon.NewDefaultIdentityServer(p.CMIPlugin),
-	}
-}
-
-// Plugin returns the new provider details
-type Plugin struct {
-	// CMIPlugin contains details about the CMIPlugin object
-	CMIPlugin *cmicommon.DefaultPlugin
-	// Contains the endpoint details on which the plugin is open for connections
-	endpoint string
-	// Identity server attached to the plugin
-	ids *cmicommon.DefaultIdentityServer
-	// Machine Server attached to the plugin
-	ms *cmicommon.DefaultMachineServer
 }
