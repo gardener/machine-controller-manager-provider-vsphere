@@ -87,19 +87,3 @@ type VApp struct {
 	// Properties are the properties values of the VApp
 	Properties map[string]string `json:"properties"`
 }
-
-// Secrets stores the cloud-provider specific sensitive-information.
-// +Optional secrets to be passed while performing machine operations on the cloud provider
-type Secrets struct {
-	// UserData is the content of the cloud config file (base64 encoded)
-	UserData string `json:"userData,omitempty"`
-	// VsphereHost is the vSphere API host name or IP address
-	VsphereHost string `json:"vsphereHost"`
-	// VsphereUsername is the user to login to vSphere API.
-	VsphereUsername string `json:"vsphereUsername"`
-	// VspherePassword is the password to login to vSphere API.
-	VspherePassword string `json:"vspherePassword"`
-	// VsphereInsecureSSL is a flag for insecure SSL
-	// +optional
-	VsphereInsecureSSL bool `json:"vsphereInsecureSSL,omitempty"`
-}
