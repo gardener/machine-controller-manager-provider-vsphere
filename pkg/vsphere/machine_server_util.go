@@ -27,9 +27,9 @@ import (
 	v1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/codes"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 )
 
 // decodeProviderSpecAndSecret converts request parameters to api.ProviderSpec
@@ -67,6 +67,6 @@ func prepareErrorf(err error, format string, args ...interface{}) error {
 		code = codes.Internal
 		wrapped = errors.Wrap(err, fmt.Sprintf(format, args...))
 	}
-	glog.V(2).Infof(wrapped.Error())
+	klog.V(2).Infof(wrapped.Error())
 	return status.Error(code, wrapped.Error())
 }
