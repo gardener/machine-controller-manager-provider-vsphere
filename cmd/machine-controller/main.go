@@ -34,8 +34,6 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/logs"
-	// TODO version should be enabled later on. DON'T import k8s.io/kubernetes 	_ "k8s.io/kubernetes/pkg/version/prometheus"        // for version metric registration
-	// TODO version should be enabled later on. DON'T import k8s.io/kubernetes  "k8s.io/kubernetes/pkg/version/verflag"
 )
 
 func main() {
@@ -47,7 +45,6 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	// verflag.PrintAndExitIfRequested()
 	driver := vsphere.NewVspherePlugin()
 
 	if err := app.Run(s, driver); err != nil {
