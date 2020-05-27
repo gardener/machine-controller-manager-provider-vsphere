@@ -31,28 +31,8 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 )
 
-// machineClassKind is used to identify the machineClassKind as AWS
-const machineClassKind = "machineClass"
-
-func (c *controller) machineDeploymentToMachineClassDelete(obj interface{}) {
-	machineDeployment, ok := obj.(*v1alpha1.MachineDeployment)
-	if machineDeployment == nil || !ok {
-		return
-	}
-	if machineDeployment.Spec.Template.Spec.Class.Kind == machineClassKind {
-		c.machineClassQueue.Add(machineDeployment.Spec.Template.Spec.Class.Name)
-	}
-}
-
-func (c *controller) machineSetToMachineClassDelete(obj interface{}) {
-	machineSet, ok := obj.(*v1alpha1.MachineSet)
-	if machineSet == nil || !ok {
-		return
-	}
-	if machineSet.Spec.Template.Spec.Class.Kind == machineClassKind {
-		c.machineClassQueue.Add(machineSet.Spec.Template.Spec.Class.Name)
-	}
-}
+// machineClassKind is used to identify the machineClassKind for generic machineClasses
+const machineClassKind = "MachineClass"
 
 func (c *controller) machineToMachineClassDelete(obj interface{}) {
 	machine, ok := obj.(*v1alpha1.Machine)
@@ -120,44 +100,21 @@ func (c *controller) reconcileClusterMachineClass(class *v1alpha1.MachineClass) 
 		return err
 	}
 
-	// TODO this should be put in own API server
-	/*
-		validationerr := validation.ValidateMachineClass(internalClass)
-		if validationerr.ToAggregate() != nil && len(validationerr.ToAggregate().Errors()) > 0 {
-			klog.Errorf("Validation of %s failed %s", machineClassKind, validationerr.ToAggregate().Error())
-			return nil
-		}
-	*/
-
-	// Manipulate finalizers
-	if class.DeletionTimestamp == nil {
-		err = c.addMachineClassFinalizers(class)
-		if err != nil {
-			return err
-		}
-	}
-
 	machines, err := c.findMachinesForClass(machineClassKind, class.Name)
 	if err != nil {
 		return err
 	}
 
-	if class.DeletionTimestamp != nil {
+	// Manipulate finalizers
+	if class.DeletionTimestamp == nil && len(machines) > 0 {
+		err = c.addMachineClassFinalizers(class)
+		if err != nil {
+			return err
+		}
+	} else {
 		if finalizers := sets.NewString(class.Finalizers...); !finalizers.Has(DeleteFinalizerName) {
 			return nil
 		}
-
-		/*
-			TODO: Check this at CMI-Server?
-			machineDeployments, err := c.findMachineDeploymentsForClass(machineClassKind, class.Name)
-			if err != nil {
-				return err
-			}
-			machineSets, err := c.findMachineSetsForClass(machineClassKind, class.Name)
-			if err != nil {
-				return err
-			}
-		*/
 
 		if len(machines) == 0 {
 			return c.deleteMachineClassFinalizers(class)

@@ -177,8 +177,8 @@ github.com/pmezard/go-difflib v0.0.0-20151028094244-d8ed2627bdf0/go.mod h1:iKH77
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pquerna/cachecontrol v0.0.0-20171018203845-0dec1b30a021/go.mod h1:prYjPmNq4d1NPVmpShWobRqXY3q7Vp+80DqgxxUrUIA=
-github.com/prashanth26/machine-controller-manager v0.0.0-20200512162209-f074b63d505f h1:lg9xz3505daUQGqtELHfJJOSJqyOi+ZHVv2dQJuonF8=
-github.com/prashanth26/machine-controller-manager v0.0.0-20200512162209-f074b63d505f/go.mod h1:zlIxuLQMtRO+aXOFsG6qtYkBmggbWY82K7MSO051ARU=
+github.com/prashanth26/machine-controller-manager v0.0.0-20200527081009-1ebfac3dd9b1 h1:fvpzLZTtGbrf83xW6ktyJLNoVBTlWbAOhWxV/swPlW0=
+github.com/prashanth26/machine-controller-manager v0.0.0-20200527081009-1ebfac3dd9b1/go.mod h1:zlIxuLQMtRO+aXOFsG6qtYkBmggbWY82K7MSO051ARU=
 github.com/prometheus/client_golang v0.9.2 h1:awm861/B8OKDd2I/6o1dy3ra4BamzKhYOiGItCeZ740=
 github.com/prometheus/client_golang v0.9.2/go.mod h1:OsXs2jCmiKlQ1lTBmv21f2mNfw4xf/QclQDMrYNZzcM=
 github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 h1:idejC8f05m9MGOsuEi1ATq9shN03HrxNkD/luQvxCv8=
