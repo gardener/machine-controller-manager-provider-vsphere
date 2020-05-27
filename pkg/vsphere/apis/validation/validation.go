@@ -71,24 +71,28 @@ func validateSpecTags(tags map[string]string) []error {
 }
 
 func validateSecrets(secret *corev1.Secret) []error {
-
-	_, hostExists := secret.Data["vsphereHost"]
-	_, usernameExists := secret.Data["vsphereUsername"]
-	_, passwordExists := secret.Data["vspherePassword"]
-	_, userDataExists := secret.Data["userData"]
 	var allErrs []error
 
-	if !hostExists {
-		allErrs = append(allErrs, fmt.Errorf("Secret vsphereHost is required field"))
-	}
-	if !usernameExists {
-		allErrs = append(allErrs, fmt.Errorf("Secret vsphereUsername is required field"))
-	}
-	if !passwordExists {
-		allErrs = append(allErrs, fmt.Errorf("Secret vspherePassword is required field"))
-	}
-	if !userDataExists {
-		allErrs = append(allErrs, fmt.Errorf("Secret userData is required field"))
+	if secret == nil {
+		allErrs = append(allErrs, fmt.Errorf("Secret object that has been passed by the MCM is nil"))
+	} else {
+		_, hostExists := secret.Data["vsphereHost"]
+		_, usernameExists := secret.Data["vsphereUsername"]
+		_, passwordExists := secret.Data["vspherePassword"]
+		_, userDataExists := secret.Data["userData"]
+
+		if !hostExists {
+			allErrs = append(allErrs, fmt.Errorf("Secret vsphereHost is required field"))
+		}
+		if !usernameExists {
+			allErrs = append(allErrs, fmt.Errorf("Secret vsphereUsername is required field"))
+		}
+		if !passwordExists {
+			allErrs = append(allErrs, fmt.Errorf("Secret vspherePassword is required field"))
+		}
+		if !userDataExists {
+			allErrs = append(allErrs, fmt.Errorf("Secret userData is required field"))
+		}
 	}
 
 	return allErrs
