@@ -19,7 +19,7 @@ require (
 )
 
 replace (
-	github.com/gardener/machine-controller-manager => github.com/prashanth26/machine-controller-manager v0.0.0-20200527081009-1ebfac3dd9b1
+	github.com/gardener/machine-controller-manager => github.com/prashanth26/machine-controller-manager v0.0.0-20200528112112-dd731fc2ac2b
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
 	k8s.io/api => k8s.io/api v0.16.8 // v0.16.8
 	k8s.io/apimachinery => k8s.io/apimachinery v0.16.8 // v0.16.8
