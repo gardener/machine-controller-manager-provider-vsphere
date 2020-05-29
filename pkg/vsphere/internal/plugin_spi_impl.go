@@ -23,12 +23,14 @@ import (
 	"net/url"
 	"strings"
 
-	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 	corev1 "k8s.io/api/core/v1"
+
+	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis/tags"
 )
 
 // PluginSPIImpl is the real implementation of PluginSPI interface
@@ -141,33 +143,19 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 
 	machineList := map[string]string{}
 
-	clusterName := ""
-	nodeRole := ""
-	for key := range providerSpec.Tags {
-		if strings.HasPrefix(key, "kubernetes.io/cluster/") {
-			clusterName = key
-		} else if strings.HasPrefix(key, "kubernetes.io/role/") {
-			nodeRole = key
-		}
-	}
-
-	if clusterName == "" || nodeRole == "" {
+	relevantTags, _ := tags.NewRelevantTags(providerSpec.Tags)
+	if relevantTags == nil {
 		return machineList, nil
 	}
 
 	visitor := func(vm *object.VirtualMachine, obj mo.ManagedEntity, field object.CustomFieldDefList) error {
-		matchedCluster := false
-		matchedRole := false
+		customValues := map[string]string{}
 		for _, cv := range obj.CustomValue {
 			sv := cv.(*types.CustomFieldStringValue)
-			switch field.ByKey(sv.Key).Name {
-			case clusterName:
-				matchedCluster = true
-			case nodeRole:
-				matchedRole = true
-			}
+			customValues[field.ByKey(sv.Key).Name] = sv.Value
 		}
-		if matchedCluster && matchedRole {
+
+		if relevantTags.Matches(customValues) {
 			uuid := vm.UUID(ctx)
 			providerID := spi.encodeProviderID(providerSpec.Region, uuid)
 			machineList[providerID] = obj.Name
