@@ -14,6 +14,17 @@ limitations under the License.
 
 package api
 
+const (
+	// TagClusterPrefix is the old tag prefix for tagging the cluster name
+	TagClusterPrefix = "kubernetes.io/cluster/"
+	// TagNodeRolePrefix is the old tag prefix for tagging the node role
+	TagNodeRolePrefix = "kubernetes.io/role/"
+	// TagMCMClusterName is the tag key for tagging a VM with the cluster name
+	TagMCMClusterName = "mcm.gardener.cloud/cluster"
+	// TagMCMRole is the tag key for tagging a VM with its role (e.g 'node')
+	TagMCMRole = "mcm.gardener.cloud/role"
+)
+
 // VsphereProviderSpec contains the fields of
 // provider spec that the plugin expects
 type VsphereProviderSpec struct {

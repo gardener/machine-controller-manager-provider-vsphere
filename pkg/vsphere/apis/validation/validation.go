@@ -18,9 +18,10 @@ package validation
 
 import (
 	"fmt"
-	"strings"
 
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis/tags"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -42,30 +43,8 @@ func ValidateVsphereProviderSpec(spec *api.VsphereProviderSpec, secrets *corev1.
 	}
 
 	allErrs = append(allErrs, validateSecrets(secrets)...)
-	allErrs = append(allErrs, validateSpecTags(spec.Tags)...)
-
-	return allErrs
-}
-
-func validateSpecTags(tags map[string]string) []error {
-	var allErrs []error
-	clusterName := ""
-	nodeRole := ""
-
-	for key := range tags {
-		if strings.Contains(key, "kubernetes.io/cluster/") {
-			clusterName = key
-		} else if strings.Contains(key, "kubernetes.io/role/") {
-			nodeRole = key
-		}
-	}
-
-	if clusterName == "" {
-		allErrs = append(allErrs, fmt.Errorf("tag required of the form kubernetes.io/cluster/****"))
-	}
-	if nodeRole == "" {
-		allErrs = append(allErrs, fmt.Errorf("tag required of the form kubernetes.io/role/****"))
-	}
+	_, tagErrs := tags.NewRelevantTags(spec.Tags)
+	allErrs = append(allErrs, tagErrs...)
 
 	return allErrs
 }
