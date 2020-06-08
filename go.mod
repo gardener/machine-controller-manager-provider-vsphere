@@ -3,7 +3,7 @@ module github.com/gardener/machine-controller-manager-provider-vsphere
 go 1.13
 
 require (
-	github.com/gardener/machine-controller-manager v0.0.0-20200512162209-f074b63d505f
+	github.com/gardener/machine-controller-manager v0.30.0
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.7.1
@@ -19,7 +19,7 @@ require (
 )
 
 replace (
-	github.com/gardener/machine-controller-manager => github.com/prashanth26/machine-controller-manager v0.0.0-20200528112112-dd731fc2ac2b
+	github.com/gardener/machine-controller-manager => github.com/gardener/machine-controller-manager v0.30.0
 	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
 	k8s.io/api => k8s.io/api v0.16.8 // v0.16.8
 	k8s.io/apimachinery => k8s.io/apimachinery v0.16.8 // v0.16.8

@@ -21,16 +21,20 @@ import (
 	"context"
 
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
-	"github.com/gardener/machine-controller-manager/pkg/util/provider/machineutils"
 	corev1 "k8s.io/api/core/v1"
 )
 
 // Driver is the common interface for creation/deletion of the VMs over different cloud-providers.
 type Driver interface {
+	// CreateMachine call is responsible for VM creation on the provider
 	CreateMachine(context.Context, *CreateMachineRequest) (*CreateMachineResponse, error)
+	// DeleteMachine call is responsible for VM deletion/termination on the provider
 	DeleteMachine(context.Context, *DeleteMachineRequest) (*DeleteMachineResponse, error)
+	// GetMachineStatus call get's the status of the VM backing the machine object on the provider
 	GetMachineStatus(context.Context, *GetMachineStatusRequest) (*GetMachineStatusResponse, error)
+	// ListMachines lists all the machines that might have been created by the supplied machineClass
 	ListMachines(context.Context, *ListMachinesRequest) (*ListMachinesResponse, error)
+	// GetVolumeIDs returns a list volumeIDs for the list of PVSpecs
 	GetVolumeIDs(context.Context, *GetVolumeIDsRequest) (*GetVolumeIDsResponse, error)
 }
 
@@ -58,9 +62,6 @@ type CreateMachineResponse struct {
 
 	// LastKnownState represents the last state of the VM during an creation/deletion error
 	LastKnownState string
-
-	// Retry specifies if operation has to be retried
-	Retry machineutils.Retry
 }
 
 // DeleteMachineRequest is the delete request for VM deletion
@@ -79,9 +80,6 @@ type DeleteMachineRequest struct {
 type DeleteMachineResponse struct {
 	// LastKnownState represents the last state of the VM during an creation/deletion error
 	LastKnownState string
-
-	// Retry specifies if operation has to be retried
-	Retry machineutils.Retry
 }
 
 // GetMachineStatusRequest is the get request for VM info
@@ -105,9 +103,6 @@ type GetMachineStatusResponse struct {
 
 	// NodeName is the name of the node-object registered to kubernetes.
 	NodeName string
-
-	// Retry specifies if operation has to be retried
-	Retry machineutils.Retry
 }
 
 // ListMachinesRequest is the request object to get a list of VMs belonging to a machineClass
@@ -123,9 +118,6 @@ type ListMachinesRequest struct {
 type ListMachinesResponse struct {
 	// MachineList is the map of list of machines. Format for the map should be <ProviderID, MachineName>.
 	MachineList map[string]string
-
-	// Retry specifies if operation has to be retried
-	Retry machineutils.Retry
 }
 
 // GetVolumeIDsRequest is the request object to get a list of VolumeIDs for a PVSpec
@@ -139,7 +131,4 @@ type GetVolumeIDsRequest struct {
 type GetVolumeIDsResponse struct {
 	// VolumeIDs is a list of VolumeIDs.
 	VolumeIDs []string
-
-	// Retry specifies if operation has to be retried
-	Retry machineutils.Retry
 }
