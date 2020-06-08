@@ -6,7 +6,7 @@ VMware `vSphere`.
 ## Prerequisites
 
 - vSphere installation, user with permissions to create/delete VMs in the specified data center. 
-  Details see below [Recommended permissions for role of vSphere user](#Recommended permissions for role of vSphere user)
+  Details see below [Recommended permissions for role of vSphere user](#recommended-permissions-for-role-of-vsphere-user)
 - A vSphere network with an DHCP server. For Gardener, the network is created by the vsphere infrastructure
   controller, which needs VMware NSX-T to setup the software-defined network, SNAT and DHCP.
 - Suitable VM templates must already be deployed on vSphere. The provider uses the `guestId` to identify the
