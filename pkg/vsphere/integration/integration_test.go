@@ -26,13 +26,16 @@ import (
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/errors"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/internal"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )
+
+// TODO: Update secret field from api.Secrets to corev1.Secret in integration tests
 
 type integrationConfig struct {
 	MachineName  string                   `json:"machineName"`
 	ProviderSpec *api.VsphereProviderSpec `json:"providerSpec"`
-	Secrets      *api.Secrets             `json:"secrets"`
+	Secrets      *corev1.Secret           `json:"secrets"`
 }
 
 // TestPluginSPIImpl tests creation and deleting of a VM via vSphere API.

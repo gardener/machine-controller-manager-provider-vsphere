@@ -23,11 +23,14 @@ import (
 	"net/url"
 	"strings"
 
-	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	corev1 "k8s.io/api/core/v1"
+
+	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis/tags"
 )
 
 // PluginSPIImpl is the real implementation of PluginSPI interface
@@ -37,14 +40,14 @@ type PluginSPIImpl struct{}
 const providerPrefix = "vsphere://"
 
 // CreateMachine creates a VM by cloning from a template
-func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
+func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return "", err
 	}
 	defer client.Logout(ctx)
 
-	cmd := newClone(machineName, providerSpec, secrets.UserData)
+	cmd := newClone(machineName, providerSpec, string(secrets.Data["userData"]))
 	err = cmd.Run(ctx, client)
 	if err != nil {
 		return "", err
@@ -75,7 +78,7 @@ func (spi *PluginSPIImpl) decodeProviderID(providerID string) (region, machineID
 }
 
 // DeleteMachine deletes a VM by name
-func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
+func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return "", err
@@ -93,7 +96,7 @@ func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string,
 }
 
 // ShutDownMachine shuts down a machine by name
-func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
+func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return "", err
@@ -111,7 +114,7 @@ func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName strin
 }
 
 // GetMachineStatus checks for existence of VM by name
-func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (string, error) {
+func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return "", err
@@ -131,7 +134,7 @@ func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName stri
 }
 
 // ListMachines lists all VMs in the DC or folder
-func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *api.Secrets) (map[string]string, error) {
+func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (map[string]string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return nil, err
@@ -140,33 +143,19 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 
 	machineList := map[string]string{}
 
-	clusterName := ""
-	nodeRole := ""
-	for key := range providerSpec.Tags {
-		if strings.HasPrefix(key, "kubernetes.io/cluster/") {
-			clusterName = key
-		} else if strings.HasPrefix(key, "kubernetes.io/role/") {
-			nodeRole = key
-		}
-	}
-
-	if clusterName == "" || nodeRole == "" {
+	relevantTags, _ := tags.NewRelevantTags(providerSpec.Tags)
+	if relevantTags == nil {
 		return machineList, nil
 	}
 
 	visitor := func(vm *object.VirtualMachine, obj mo.ManagedEntity, field object.CustomFieldDefList) error {
-		matchedCluster := false
-		matchedRole := false
+		customValues := map[string]string{}
 		for _, cv := range obj.CustomValue {
 			sv := cv.(*types.CustomFieldStringValue)
-			switch field.ByKey(sv.Key).Name {
-			case clusterName:
-				matchedCluster = true
-			case nodeRole:
-				matchedRole = true
-			}
+			customValues[field.ByKey(sv.Key).Name] = sv.Value
 		}
-		if matchedCluster && matchedRole {
+
+		if relevantTags.Matches(customValues) {
 			uuid := vm.UUID(ctx)
 			providerID := spi.encodeProviderID(providerSpec.Region, uuid)
 			machineList[providerID] = obj.Name
@@ -182,14 +171,15 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 	return machineList, nil
 }
 
-func createVsphereClient(ctx context.Context, secret *api.Secrets) (*govmomi.Client, error) {
-	clientURL, err := url.Parse("https://" + secret.VsphereHost + "/sdk")
+func createVsphereClient(ctx context.Context, secret *corev1.Secret) (*govmomi.Client, error) {
+	clientURL, err := url.Parse("https://" + string(secret.Data["vsphereHost"]) + "/sdk")
 	if err != nil {
 		return nil, err
 	}
 
-	clientURL.User = url.UserPassword(secret.VsphereUsername, secret.VspherePassword)
+	clientURL.User = url.UserPassword(string(secret.Data["vsphereUsername"]), string(secret.Data["vspherePassword"]))
 
 	// Connect and log in to ESX or vCenter
-	return govmomi.NewClient(ctx, clientURL, secret.VsphereInsecureSSL)
+	vsphereInsecureSSL := strings.ToLower(string(secret.Data["vsphereInsecureSSL"])) == "true" || string(secret.Data["vsphereInsecureSSL"]) == "1"
+	return govmomi.NewClient(ctx, clientURL, vsphereInsecureSSL)
 }

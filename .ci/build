@@ -29,16 +29,16 @@ if [[ -z "$LOCAL_BUILD" ]]; then
     -mod=vendor \
     -a \
     -v \
-    -o ${BINARY_PATH}/rel/cmi-plugin \
+    -o ${BINARY_PATH}/rel/machine-controller \
     -ldflags "-X main.version=$VERSION-$(git rev-parse HEAD)" \
-    app/controller/cmi-plugin.go
+    cmd/machine-controller/main.go
 
 # If the LOCAL_BUILD environment variable is set, we simply run `go build`.
 else
   go build \
     -mod=vendor \
     -v \
-    -o ${BINARY_PATH}/cmi-plugin \
+    -o ${BINARY_PATH}/machine-controller \
     -ldflags "-X main.version=$VERSION-$(git rev-parse HEAD)" \
-    app/controller/cmi-plugin.go
+    cmd/machine-controller/main.go
 fi

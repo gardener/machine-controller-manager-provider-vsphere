@@ -14,6 +14,17 @@ limitations under the License.
 
 package api
 
+const (
+	// TagClusterPrefix is the old tag prefix for tagging the cluster name
+	TagClusterPrefix = "kubernetes.io/cluster/"
+	// TagNodeRolePrefix is the old tag prefix for tagging the node role
+	TagNodeRolePrefix = "kubernetes.io/role/"
+	// TagMCMClusterName is the tag key for tagging a VM with the cluster name
+	TagMCMClusterName = "mcm.gardener.cloud/cluster"
+	// TagMCMRole is the tag key for tagging a VM with its role (e.g 'node')
+	TagMCMRole = "mcm.gardener.cloud/role"
+)
+
 // VsphereProviderSpec contains the fields of
 // provider spec that the plugin expects
 type VsphereProviderSpec struct {
@@ -86,20 +97,4 @@ type VSphereSystemDisk struct {
 type VApp struct {
 	// Properties are the properties values of the VApp
 	Properties map[string]string `json:"properties"`
-}
-
-// Secrets stores the cloud-provider specific sensitive-information.
-// +Optional secrets to be passed while performing machine operations on the cloud provider
-type Secrets struct {
-	// UserData is the content of the cloud config file (base64 encoded)
-	UserData string `json:"userData,omitempty"`
-	// VsphereHost is the vSphere API host name or IP address
-	VsphereHost string `json:"vsphereHost"`
-	// VsphereUsername is the user to login to vSphere API.
-	VsphereUsername string `json:"vsphereUsername"`
-	// VspherePassword is the password to login to vSphere API.
-	VspherePassword string `json:"vspherePassword"`
-	// VsphereInsecureSSL is a flag for insecure SSL
-	// +optional
-	VsphereInsecureSSL bool `json:"vsphereInsecureSSL,omitempty"`
 }

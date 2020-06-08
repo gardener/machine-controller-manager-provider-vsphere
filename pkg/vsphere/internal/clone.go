@@ -27,7 +27,6 @@ import (
 
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/internal/flags"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
@@ -36,6 +35,7 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	"k8s.io/klog"
 )
 
 const (
@@ -163,7 +163,7 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 	if cmd.spec.GuestID != "" {
 		guestID = cmd.spec.GuestID
 	}
-	glog.V(4).Infof("Template guestId: %s, used guestId: %s", props.Config.GuestId, guestID)
+	klog.V(4).Infof("Template guestId: %s, used guestId: %s", props.Config.GuestId, guestID)
 
 	sshkeys := make([]string, len(cmd.spec.SSHKeys))
 	for i := range cmd.spec.SSHKeys {
@@ -191,7 +191,7 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 				config.PasswdHash = passwordHash
 			}
 			ignitionContent, err := ignitionFile(config)
-			glog.V(4).Infof("ignitionContent: |%s|", ignitionContent)
+			klog.V(4).Infof("ignitionContent: |%s|", ignitionContent)
 			if err != nil {
 				return errors.Wrap(err, "setting VApp (coreos64)")
 			}
@@ -216,7 +216,7 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 				config.PasswdHash = passwordHash
 			}
 			ignitionContent, err := ignitionFile(config)
-			glog.V(4).Infof("ignitionContent: |%s|", ignitionContent)
+			klog.V(4).Infof("ignitionContent: |%s|", ignitionContent)
 			if err != nil {
 				return errors.Wrap(err, "setting VApp (flatcar64)")
 			}
@@ -314,7 +314,7 @@ func (cmd *clone) upgradeHardware(ctx context.Context, vm *object.VirtualMachine
 		err = task.Wait(ctx)
 		if err != nil {
 			if isAlreadyUpgraded(err) {
-				glog.V(4).Infof("Already upgraded: %s", err)
+				klog.V(4).Infof("Already upgraded: %s", err)
 			} else {
 				return err
 			}
@@ -397,7 +397,7 @@ func (cmd *clone) expandVAppConfig(vapp *api.VApp) (*types.VmConfigSpec, error) 
 // Properties is a convenience method that wraps fetching the
 // VirtualMachine MO from its higher-level object.
 func moProperties(vm *object.VirtualMachine) (*mo.VirtualMachine, error) {
-	glog.V(4).Infof("[DEBUG] Fetching properties for VM %q", vm.InventoryPath)
+	klog.V(4).Infof("[DEBUG] Fetching properties for VM %q", vm.InventoryPath)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultAPITimeout)
 	defer cancel()
 	var props mo.VirtualMachine
@@ -633,7 +633,7 @@ func (cmd *clone) cloneVM(ctx context.Context, systemDisk *api.VSphereSystemDisk
 		return nil, errors.Wrap(err, "starting cloning task failed")
 	}
 
-	glog.Infof("Cloning %s to %s...", cmd.VirtualMachine.InventoryPath, cmd.name)
+	klog.Infof("Cloning %s to %s...", cmd.VirtualMachine.InventoryPath, cmd.name)
 
 	info, err := task.WaitForResult(ctx)
 	if err != nil {

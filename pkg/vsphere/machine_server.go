@@ -22,27 +22,23 @@ Modifications Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights 
 package vsphere
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"github.com/gardener/machine-spec/lib/go/cmi"
-	"github.com/golang/glog"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/driver"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 )
 
 // CreateMachine handles a machine creation request
 // REQUIRED METHOD
 //
-// REQUEST PARAMETERS (cmi.CreateMachineRequest)
+// REQUEST PARAMETERS (driver.CreateMachineRequest)
 // MachineName           string             Contains the name of the machine object for whom an VM is to be created at the provider
 // ProviderSpec          bytes(blob)        Template/Configuration of the machine to be created is given by at the provider
 // Secrets               map<string,bytes>  (Optional) Contains a map from string to string contains any cloud specific secrets that can be used by the provider
 // LastKnownState        bytes(blob)        (Optional) Last known state of VM during last operation. Could be helpful to continue operation from previous state
 //
-// RESPONSE PARAMETERS (cmi.CreateMachineResponse)
+// RESPONSE PARAMETERS (driver.CreateMachineResponse)
 // ProviderID            string             Unique identification of the VM at the cloud provider. This could be the same/different from req.MachineName.
 //                                          ProviderID typically matches with the node.Spec.ProviderID on the node object.
 //                                          Eg: gce://project-name/region/vm-ProviderID
@@ -56,98 +52,98 @@ import (
 // These could be done using tag(s)/resource-groups etc.
 // This logic is used by safety controller to delete orphan VMs which are not backed by any machine CRD
 //
-func (ms *MachinePlugin) CreateMachine(ctx context.Context, req *cmi.CreateMachineRequest) (*cmi.CreateMachineResponse, error) {
+func (ms *MachinePlugin) CreateMachine(ctx context.Context, req *driver.CreateMachineRequest) (*driver.CreateMachineResponse, error) {
 	// Log messages to track start of request
-	glog.V(2).Infof("Create machine request has been received for %q", req.MachineName)
+	klog.V(2).Infof("Create machine request has been received for %q", req.Machine.Name)
 
-	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, true)
+	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
 	if err != nil {
-		return nil, prepareErrorf(err, "Create machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
+		return nil, prepareErrorf(err, "Create machine %q failed on decodeProviderSpecAndSecret", req.Machine.Name)
 	}
 
-	providerID, err := ms.SPI.CreateMachine(ctx, req.MachineName, providerSpec, secrets)
+	providerID, err := ms.SPI.CreateMachine(ctx, req.Machine.Name, providerSpec, req.Secret)
 	if err != nil {
-		return nil, prepareErrorf(err, "Create machine %q failed", req.MachineName)
+		return nil, prepareErrorf(err, "Create machine %q failed", req.Machine.Name)
 	}
 
-	response := &cmi.CreateMachineResponse{
+	response := &driver.CreateMachineResponse{
 		ProviderID:     providerID,
-		NodeName:       req.MachineName,
-		LastKnownState: []byte(fmt.Sprintf("Created %s", providerID)),
+		NodeName:       req.Machine.Name,
+		LastKnownState: fmt.Sprintf("Created %s", providerID),
 	}
 
-	glog.V(2).Infof("VM with Provider-ID: %q created for Machine: %q", response.ProviderID, req.MachineName)
+	klog.V(2).Infof("VM with Provider-ID: %q created for Machine: %q", response.ProviderID, req.Machine.Name)
 	return response, nil
 }
 
 // DeleteMachine handles a machine deletion request
 //
-// REQUEST PARAMETERS (cmi.DeleteMachineRequest)
+// REQUEST PARAMETERS (driver.DeleteMachineRequest)
 // MachineName          string              Contains the name of the machine object for the backing VM(s) have to be deleted
 // ProviderID           string              Contains the unique identification of the VM at the cloud provider
 // ProviderSpec         bytes(blob)         Template/Configuration of the machine to be deleted is given by at the provider
 // Secrets              map<string,bytes>   (Optional) Contains a map from string to string contains any cloud specific secrets that can be used by the provider
 // LastKnownState       bytes(blob)         (Optional) Last known state of VM during last operation. Could be helpful to continue operation from previous state
 //
-// RESPONSE PARAMETERS (cmi.DeleteMachineResponse)
+// RESPONSE PARAMETERS (driver.DeleteMachineResponse)
 // LastKnownState       bytes(blob)        (Optional) Last known state of VM during the current operation.
 //                                          Could be helpful to continue operations in future requests.
 //
-func (ms *MachinePlugin) DeleteMachine(ctx context.Context, req *cmi.DeleteMachineRequest) (*cmi.DeleteMachineResponse, error) {
+func (ms *MachinePlugin) DeleteMachine(ctx context.Context, req *driver.DeleteMachineRequest) (*driver.DeleteMachineResponse, error) {
 	// Log messages to track delete request
-	glog.V(2).Infof("Machine deletion request has been received for %q", req.MachineName)
+	klog.V(2).Infof("Machine deletion request has been received for %q", req.Machine.Name)
 
-	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, false)
+	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
 	if err != nil {
-		return nil, prepareErrorf(err, "Delete machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
+		return nil, prepareErrorf(err, "Delete machine %q failed on decodeProviderSpecAndSecret", req.Machine.Name)
 	}
 
-	providerID, err := ms.SPI.DeleteMachine(ctx, req.MachineName, req.ProviderID, providerSpec, secrets)
+	providerID, err := ms.SPI.DeleteMachine(ctx, req.Machine.Name, req.Machine.Spec.ProviderID, providerSpec, req.Secret)
 	if err != nil {
-		return nil, prepareErrorf(err, "Delete machine %q failed", req.MachineName)
+		return nil, prepareErrorf(err, "Delete machine %q failed", req.Machine.Name)
 	}
 
-	glog.V(2).Infof("VM %q for Machine %q was terminated succesfully", providerID, req.MachineName)
+	klog.V(2).Infof("VM %q for Machine %q was terminated succesfully", providerID, req.Machine.Name)
 
-	return &cmi.DeleteMachineResponse{}, nil
+	return &driver.DeleteMachineResponse{}, nil
 }
 
 // GetMachineStatus handles a machine get status request
 // OPTIONAL METHOD
 //
-// REQUEST PARAMETERS (cmi.GetMachineStatusRequest)
+// REQUEST PARAMETERS (driver.GetMachineStatusRequest)
 // MachineName          string              Contains the name of the machine object for whose status is to be retrived
 // ProviderID           string              Contains the unique identification of the VM at the cloud provider
 // ProviderSpec         bytes(blob)         Template/Configuration of the machine whose status is to be retrived
 // Secrets              map<string,bytes>   (Optional) Contains a map from string to string contains any cloud specific secrets that can be used by the provider
 //
-// RESPONSE PARAMETERS (cmi.GetMachineStatueResponse)
+// RESPONSE PARAMETERS (driver.GetMachineStatueResponse)
 // ProviderID           string              Unique identification of the VM at the cloud provider. This could be the same/different from req.MachineName.
 //                                          ProviderID typically matches with the node.Spec.ProviderID on the node object.
 //                                          Eg: gce://project-name/region/vm-ProviderID
 // NodeName             string              Returns the name of the node-object that the VM register's with Kubernetes.
 //                                          This could be different from req.MachineName as well
 //
-func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *cmi.GetMachineStatusRequest) (*cmi.GetMachineStatusResponse, error) {
+func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *driver.GetMachineStatusRequest) (*driver.GetMachineStatusResponse, error) {
 	// Log messages to track start of request
-	glog.V(2).Infof("Machine status request has been received for %q", req.MachineName)
+	klog.V(2).Infof("Machine status request has been received for %q", req.Machine.Name)
 
-	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, false)
+	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
 	if err != nil {
-		return nil, prepareErrorf(err, "Machine status %q failed on decodeProviderSpecAndSecret", req.MachineName)
+		return nil, prepareErrorf(err, "Machine status %q failed on decodeProviderSpecAndSecret", req.Machine.Name)
 	}
 
-	providerID, err := ms.SPI.GetMachineStatus(ctx, req.MachineName, req.ProviderID, providerSpec, secrets)
+	providerID, err := ms.SPI.GetMachineStatus(ctx, req.Machine.Name, req.Machine.Spec.ProviderID, providerSpec, req.Secret)
 	if err != nil {
-		return nil, prepareErrorf(err, "Machine status %q failed", req.MachineName)
+		return nil, prepareErrorf(err, "Machine status %q failed", req.Machine.Name)
 	}
 
-	response := &cmi.GetMachineStatusResponse{
+	response := &driver.GetMachineStatusResponse{
 		ProviderID: providerID,
-		NodeName:   req.MachineName,
+		NodeName:   req.Machine.Name,
 	}
 
-	glog.V(2).Infof("Machine status: found VM %q for Machine: %q", response.ProviderID, req.MachineName)
+	klog.V(2).Infof("Machine status: found VM %q for Machine: %q", response.ProviderID, req.Machine.Name)
 
 	return response, nil
 }
@@ -157,56 +153,50 @@ func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *cmi.GetMachi
 // you have used to identify machines created by a providerSpec. It could be tags/resource-groups etc
 // OPTIONAL METHOD
 //
-// REQUEST PARAMETERS (cmi.ListMachinesRequest)
+// REQUEST PARAMETERS (driver.ListMachinesRequest)
 // ProviderSpec          bytes(blob)         Template/Configuration of the machine that wouldn've been created by this ProviderSpec (Machine Class)
 // Secrets               map<string,bytes>   (Optional) Contains a map from string to string contains any cloud specific secrets that can be used by the provider
 //
-// RESPONSE PARAMETERS (cmi.ListMachinesResponse)
+// RESPONSE PARAMETERS (driver.ListMachinesResponse)
 // MachineList           map<string,string>  A map containing the keys as the MachineID and value as the MachineName
 //                                           for all machine's who where possibilly created by this ProviderSpec
 //
-func (ms *MachinePlugin) ListMachines(ctx context.Context, req *cmi.ListMachinesRequest) (*cmi.ListMachinesResponse, error) {
+func (ms *MachinePlugin) ListMachines(ctx context.Context, req *driver.ListMachinesRequest) (*driver.ListMachinesResponse, error) {
 	// Log messages to track start of request
-	glog.V(2).Infof("List machines request has been received")
+	klog.V(2).Infof("List machines request has been received")
 
-	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, false)
+	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
 	if err != nil {
 		return nil, prepareErrorf(err, "List machines failed on decodeProviderSpecAndSecret")
 	}
 
-	machineList, err := ms.SPI.ListMachines(ctx, providerSpec, secrets)
+	machineList, err := ms.SPI.ListMachines(ctx, providerSpec, req.Secret)
 	if err != nil {
 		return nil, prepareErrorf(err, "List machines failed")
 	}
 
-	glog.V(2).Infof("List machines request for dc %s, folder %s found %d machines", providerSpec.Datacenter, providerSpec.Folder, len(machineList))
-	return &cmi.ListMachinesResponse{
+	klog.V(2).Infof("List machines request for dc %s, folder %s found %d machines", providerSpec.Datacenter, providerSpec.Folder, len(machineList))
+	return &driver.ListMachinesResponse{
 		MachineList: machineList,
 	}, nil
 }
 
 // GetVolumeIDs returns a list of Volume IDs for all PV Specs for whom an provider volume was found
 //
-// REQUEST PARAMETERS (cmi.GetVolumeIDsRequest)
+// REQUEST PARAMETERS (driver.GetVolumeIDsRequest)
 // PVSpecList            bytes(blob)         PVSpecsList is a list PV specs for whom volume-IDs are required. Plugin should parse this raw data into pre-defined list of PVSpecs.
 //
-// RESPONSE PARAMETERS (cmi.GetVolumeIDsResponse)
+// RESPONSE PARAMETERS (driver.GetVolumeIDsResponse)
 // VolumeIDs             repeated string     VolumeIDs is a repeated list of VolumeIDs.
 //
-func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *cmi.GetVolumeIDsRequest) (*cmi.GetVolumeIDsResponse, error) {
+func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *driver.GetVolumeIDsRequest) (*driver.GetVolumeIDsResponse, error) {
 	// Log messages to track start of request
-	glog.V(2).Infof("GetVolumeIDs request has been received")
-	glog.V(4).Infof("PVSpecList = %q", req.PVSpecList)
-
-	var volumeSpecs []*corev1.PersistentVolumeSpec
-	err := json.Unmarshal(req.PVSpecList, &volumeSpecs)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+	klog.V(2).Infof("GetVolumeIDs request has been received")
+	klog.V(4).Infof("PVSpecList = %q", req.PVSpecs)
 
 	var volumeIDs []string
-	for i := range volumeSpecs {
-		spec := volumeSpecs[i]
+	for i := range req.PVSpecs {
+		spec := req.PVSpecs[i]
 		if spec.VsphereVolume == nil {
 			// Not an vsphere volume
 			continue
@@ -215,43 +205,11 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *cmi.GetVolumeIDs
 		volumeIDs = append(volumeIDs, volumeID)
 	}
 
-	glog.V(2).Infof("GetVolumeIDs machines request has been processed successfully (%d/%d).", len(volumeIDs), len(volumeSpecs))
-	glog.V(4).Infof("GetVolumeIDs volumneIDs: %v", volumeIDs)
+	klog.V(2).Infof("GetVolumeIDs machines request has been processed successfully (%d/%d).", len(volumeIDs), len(req.PVSpecs))
+	klog.V(4).Infof("GetVolumeIDs volumneIDs: %v", volumeIDs)
 
-	Resp := &cmi.GetVolumeIDsResponse{
+	Resp := &driver.GetVolumeIDsResponse{
 		VolumeIDs: volumeIDs,
 	}
 	return Resp, nil
-}
-
-// ShutDownMachine handles a machine shutdown/power-off/stop request
-// OPTIONAL METHOD
-//
-// REQUEST PARAMETERS (cmi.ShutDownMachineRequest)
-// ProviderID           string              Contains the unique identification of the VM at the cloud provider
-// ProviderSpec          bytes(blob)         Template/Configuration of the machine that wouldn've been created by this ProviderSpec (Machine Class)
-// Secrets               map<string,bytes>   (Optional) Contains a map from string to string contains any cloud specific secrets that can be used by the provider
-// LastKnownState        bytes(blob)        (Optional) Last known state of VM during last operation. Could be helpful to continue operation from previous state
-//
-// RESPONSE PARAMETERS (cmi.DeleteMachineResponse)
-// LastKnownState        bytes(blob)        (Optional) Last known state of VM during the current operation.
-//                                          Could be helpful to continue operations in future requests.
-//
-func (ms *MachinePlugin) ShutDownMachine(ctx context.Context, req *cmi.ShutDownMachineRequest) (*cmi.ShutDownMachineResponse, error) {
-	// Log messages to track start of request
-	glog.V(2).Infof("ShutDown machine request has been received for %q", req.MachineName)
-
-	providerSpec, secrets, err := decodeProviderSpecAndSecret(req.ProviderSpec, req.Secrets, false)
-	if err != nil {
-		return nil, prepareErrorf(err, "ShutDown machine %q failed on decodeProviderSpecAndSecret", req.MachineName)
-	}
-
-	providerID, err := ms.SPI.ShutDownMachine(ctx, req.MachineName, req.ProviderID, providerSpec, secrets)
-	if err != nil {
-		return nil, prepareErrorf(err, "ShutDown machine %q failed", req.MachineName)
-	}
-
-	glog.V(2).Infof("VM %q for Machine %q was shutted down succesfully", providerID, req.MachineName)
-
-	return &cmi.ShutDownMachineResponse{LastKnownState: []byte(fmt.Sprintf("Shutted down %s", providerID))}, nil
 }

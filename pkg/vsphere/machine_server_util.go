@@ -20,77 +20,38 @@ package vsphere
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	api "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis/validation"
 	errors2 "github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/errors"
-	"github.com/golang/glog"
+	v1alpha1 "github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/codes"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 )
 
-// decodeProviderSpecAndSecret converts request parameters to api.ProviderSpec & api.Secrets
-func decodeProviderSpecAndSecret(providerSpecBytes []byte, secretMap map[string][]byte, checkUserData bool) (*api.VsphereProviderSpec, *api.Secrets, error) {
+// decodeProviderSpecAndSecret converts request parameters to api.ProviderSpec
+func decodeProviderSpecAndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (*api.VsphereProviderSpec, error) {
 	var (
 		providerSpec *api.VsphereProviderSpec
 	)
 
 	// Extract providerSpec
-	err := json.Unmarshal(providerSpecBytes, &providerSpec)
+	err := json.Unmarshal(machineClass.ProviderSpec.Raw, &providerSpec)
 	if err != nil {
-		return nil, nil, status.Error(codes.Internal, err.Error())
-	}
-
-	// Extract secrets from secretMap
-	secrets, err := getSecretsFromSecretMap(secretMap, checkUserData)
-	if err != nil {
-		return nil, nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	//Validate the Spec and Secrets
-	ValidationErr := validation.ValidateVsphereProviderSpec(providerSpec, secrets)
+	ValidationErr := validation.ValidateVsphereProviderSpec(providerSpec, secret)
 	if ValidationErr != nil {
 		err = fmt.Errorf("Error while validating ProviderSpec %v", ValidationErr)
-		return nil, nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return providerSpec, secrets, nil
-}
-
-// getSecretsFromSecretMap converts secretMap to api.secrets object
-func getSecretsFromSecretMap(secretMap map[string][]byte, checkUserData bool) (*api.Secrets, error) {
-	host, hostExists := secretMap["vsphereHost"]
-	username, usernameExists := secretMap["vsphereUsername"]
-	password, passwordExists := secretMap["vspherePassword"]
-	insecureSSL := secretMap["vsphereInsecureSSL"]
-	userData, userDataExists := secretMap["userData"]
-	missingKeys := []string{}
-	if !hostExists {
-		missingKeys = append(missingKeys, "vsphereHost")
-	}
-	if !usernameExists {
-		missingKeys = append(missingKeys, "vsphereUsername")
-	}
-	if !passwordExists {
-		missingKeys = append(missingKeys, "vspherePassword")
-	}
-	if checkUserData && !userDataExists {
-		missingKeys = append(missingKeys, "userData")
-	}
-	if len(missingKeys) > 0 {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("invalid secret map. Missing keys: '%s'", strings.Join(missingKeys, "', '")))
-	}
-
-	var secrets api.Secrets
-	secrets.VsphereHost = string(host)
-	secrets.VsphereUsername = string(username)
-	secrets.VspherePassword = string(password)
-	secrets.VsphereInsecureSSL = strings.ToLower(string(insecureSSL)) == "true" || string(insecureSSL) == "1"
-	secrets.UserData = string(userData)
-
-	return &secrets, nil
+	return providerSpec, nil
 }
 
 func prepareErrorf(err error, format string, args ...interface{}) error {
@@ -106,6 +67,6 @@ func prepareErrorf(err error, format string, args ...interface{}) error {
 		code = codes.Internal
 		wrapped = errors.Wrap(err, fmt.Sprintf(format, args...))
 	}
-	glog.V(2).Infof(wrapped.Error())
+	klog.V(2).Infof(wrapped.Error())
 	return status.Error(code, wrapped.Error())
 }
