@@ -28,7 +28,7 @@ type NetworkFlag struct {
 	*DatacenterFlag
 
 	name       string
-	switchUuid string
+	switchUUID string
 	net        object.NetworkReference
 	adapter    string
 	address    string
@@ -46,8 +46,8 @@ func NewNetworkFlag(ctx context.Context) (*NetworkFlag, context.Context) {
 	if GetSpecFromPseudoFlagset(ctx).Network != "" {
 		_ = v.Set(GetSpecFromPseudoFlagset(ctx).Network)
 	}
-	if GetSpecFromPseudoFlagset(ctx).SwitchUuid != "" {
-		_ = v.SetSwitchUuid(GetSpecFromPseudoFlagset(ctx).SwitchUuid)
+	if GetSpecFromPseudoFlagset(ctx).SwitchUUID != "" {
+		_ = v.SetSwitchUUID(GetSpecFromPseudoFlagset(ctx).SwitchUUID)
 	}
 	v.DatacenterFlag, ctx = NewDatacenterFlag(ctx)
 	ctx = context.WithValue(ctx, networkFlagKey, v)
@@ -64,8 +64,8 @@ func (flag *NetworkFlag) Set(name string) error {
 	return nil
 }
 
-func (flag *NetworkFlag) SetSwitchUuid(uuid string) error {
-	flag.switchUuid = uuid
+func (flag *NetworkFlag) SetSwitchUUID(uuid string) error {
+	flag.switchUUID = uuid
 	return nil
 }
 
@@ -101,7 +101,7 @@ func (flag *NetworkFlag) findNetwork(ctx context.Context, name string) (object.N
 		return networks[0], nil
 	}
 
-	if flag.switchUuid == "" {
+	if flag.switchUUID == "" {
 		return nil, fmt.Errorf("path '%s' resolves to multiple networks. Need switchUuid to select correct network", name)
 	}
 
@@ -114,7 +114,7 @@ func (flag *NetworkFlag) findNetwork(ctx context.Context, name string) (object.N
 		}
 		if dvInfo, ok := info.(*types.VirtualEthernetCardDistributedVirtualPortBackingInfo); ok {
 			elems[network.Reference().Value] = dvInfo.Port.SwitchUuid
-			if dvInfo.Port.SwitchUuid == flag.switchUuid {
+			if dvInfo.Port.SwitchUuid == flag.switchUUID {
 				return network, nil
 			}
 		}
