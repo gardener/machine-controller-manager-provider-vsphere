@@ -62,6 +62,9 @@ type VsphereProviderSpec struct {
 	SystemDisk *VSphereSystemDisk `json:"systemDisk,omitempty"`
 	// Network is the vSphere network to use
 	Network string `json:"network"`
+	// SwitchUuid is VDS UUID (only needed if there are multiple virtual distributed switches the network is assigned to)
+	// +optional
+	SwitchUuid string `json:"switchUuid"`
 	// TemplateVM is the VM template to clone
 	TemplateVM string `json:"templateVM"`
 	// GuestID is an optional value to overwrite the VM guest id of the templae

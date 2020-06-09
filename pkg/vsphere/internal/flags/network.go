@@ -27,11 +27,12 @@ import (
 type NetworkFlag struct {
 	*DatacenterFlag
 
-	name    string
-	net     object.NetworkReference
-	adapter string
-	address string
-	isset   bool
+	name       string
+	switchUuid string
+	net        object.NetworkReference
+	adapter    string
+	address    string
+	isset      bool
 }
 
 var networkFlagKey = flagKey("network")
@@ -45,6 +46,9 @@ func NewNetworkFlag(ctx context.Context) (*NetworkFlag, context.Context) {
 	if GetSpecFromPseudoFlagset(ctx).Network != "" {
 		_ = v.Set(GetSpecFromPseudoFlagset(ctx).Network)
 	}
+	if GetSpecFromPseudoFlagset(ctx).SwitchUuid != "" {
+		_ = v.SetSwitchUuid(GetSpecFromPseudoFlagset(ctx).SwitchUuid)
+	}
 	v.DatacenterFlag, ctx = NewDatacenterFlag(ctx)
 	ctx = context.WithValue(ctx, networkFlagKey, v)
 	return v, ctx
@@ -57,6 +61,11 @@ func (flag *NetworkFlag) String() string {
 func (flag *NetworkFlag) Set(name string) error {
 	flag.name = name
 	flag.isset = true
+	return nil
+}
+
+func (flag *NetworkFlag) SetSwitchUuid(uuid string) error {
+	flag.switchUuid = uuid
 	return nil
 }
 
@@ -92,14 +101,25 @@ func (flag *NetworkFlag) findNetwork(ctx context.Context, name string) (object.N
 		return networks[0], nil
 	}
 
-	// ignore duplicates
-	inventoryPath := networks[0].GetInventoryPath()
+	if flag.switchUuid == "" {
+		return nil, fmt.Errorf("path '%s' resolves to multiple networks. Need switchUuid to select correct network", name)
+	}
+
+	// select by switchUuid
+	elems := map[string]string{}
 	for _, network := range networks {
-		if network.GetInventoryPath() != inventoryPath {
-			return nil, fmt.Errorf("path '%s' resolves to multiple networks (%s,%s)", name, inventoryPath, network.GetInventoryPath())
+		info, err := network.EthernetCardBackingInfo(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if dvInfo, ok := info.(*types.VirtualEthernetCardDistributedVirtualPortBackingInfo); ok {
+			elems[network.Reference().Value] = dvInfo.Port.SwitchUuid
+			if dvInfo.Port.SwitchUuid == flag.switchUuid {
+				return network, nil
+			}
 		}
 	}
-	return networks[0], nil
+	return nil, fmt.Errorf("path '%s' resolves to multiple networks. Found these switchUuids: '%s'", name, elems)
 }
 
 func (flag *NetworkFlag) Device() (types.BaseVirtualDevice, error) {
