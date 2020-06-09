@@ -134,7 +134,7 @@ github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/xfs
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/vmware/govmomi v0.21.1-0.20190909001527-8d286461ab92
+# github.com/vmware/govmomi v0.22.1
 github.com/vmware/govmomi
 github.com/vmware/govmomi/find
 github.com/vmware/govmomi/list

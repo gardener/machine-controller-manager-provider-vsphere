@@ -18,6 +18,8 @@ package flags
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -67,16 +69,37 @@ func (flag *NetworkFlag) Network() (object.NetworkReference, error) {
 		return flag.net, nil
 	}
 
+	var err error
+	if flag.net, err = flag.findNetwork(context.TODO(), flag.name); err != nil {
+		return nil, err
+	}
+
+	return flag.net, nil
+}
+
+func (flag *NetworkFlag) findNetwork(ctx context.Context, name string) (object.NetworkReference, error) {
 	finder, err := flag.Finder()
 	if err != nil {
 		return nil, err
 	}
 
-	if flag.net, err = finder.NetworkOrDefault(context.TODO(), flag.name); err != nil {
+	networks, err := finder.NetworkList(ctx, name)
+	if err != nil {
 		return nil, err
 	}
 
-	return flag.net, nil
+	if len(networks) == 1 {
+		return networks[0], nil
+	}
+
+	// ignore duplicates
+	inventoryPath := networks[0].GetInventoryPath()
+	for _, network := range networks {
+		if network.GetInventoryPath() != inventoryPath {
+			return nil, fmt.Errorf("path '%s' resolves to multiple networks (%s,%s)", name, inventoryPath, network.GetInventoryPath())
+		}
+	}
+	return networks[0], nil
 }
 
 func (flag *NetworkFlag) Device() (types.BaseVirtualDevice, error) {

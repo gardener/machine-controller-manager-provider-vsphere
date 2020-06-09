@@ -9,7 +9,7 @@ require (
 	github.com/onsi/gomega v1.7.1
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/vmware/govmomi v0.21.1-0.20190909001527-8d286461ab92
+	github.com/vmware/govmomi v0.22.1
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
 	golang.org/x/net v0.0.0-20191126235420-ef20fe5d7933
 	k8s.io/api v0.16.8

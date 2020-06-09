@@ -72,7 +72,7 @@ func TestPluginSPIImpl(t *testing.T) {
 	case *errors.MachineNotFoundError:
 		// expected
 	default:
-		t.Errorf("Unexpected error on GetMachineStatus")
+		t.Errorf("Unexpected error on GetMachineStatus %v", err)
 		return
 	}
 
