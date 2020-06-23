@@ -255,6 +255,7 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 	if memory > 0 {
 		vmConfigSpec.MemoryMB = int64(memory)
 	}
+	vmConfigSpec.MemoryReservationLockedToMax = cmd.spec.MemoryReservationLockedToMax
 	vmConfigSpec.VAppConfig = vappConfig
 	if cmd.spec.GuestID != "" {
 		vmConfigSpec.GuestId = cmd.spec.GuestID
@@ -263,6 +264,14 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 	// ensure that Disk UUID is enabled
 	btrue := true
 	vmConfigSpec.Flags = &types.VirtualMachineFlagInfo{DiskUuidEnabled: &btrue}
+
+	// optional extra config
+	if len(cmd.spec.ExtraConfig) > 0 {
+		vmConfigSpec.ExtraConfig = []types.BaseOptionValue{}
+		for k, v := range cmd.spec.ExtraConfig {
+			vmConfigSpec.ExtraConfig = append(vmConfigSpec.ExtraConfig, &types.OptionValue{Key: k, Value: v})
+		}
+	}
 
 	task, err := vm.Reconfigure(ctx, vmConfigSpec)
 	if err != nil {

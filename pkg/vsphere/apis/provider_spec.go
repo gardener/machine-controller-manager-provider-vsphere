@@ -58,8 +58,16 @@ type VsphereProviderSpec struct {
 	NumCpus int `json:"numCpus"`
 	// Memory is VM memory size in MB
 	Memory int `json:"memory"`
+	// MemoryReservationLockedToMax is flag to reserve all guest OS memory (no swapping in ESXi host)
+	// +optional
+	MemoryReservationLockedToMax *bool `json:"memoryReservationLockedToMax,omitempty"`
 	// SystemDisk specifies the system disk
+	// +optional
 	SystemDisk *VSphereSystemDisk `json:"systemDisk,omitempty"`
+	// ExtraConfig allows to specify additional VM options.
+	// e.g. sched.swap.vmxSwapEnabled=false to disable the VMX process swap file
+	// +optional
+	ExtraConfig map[string]string `json:"extraConfig,omitempty"`
 	// Network is the vSphere network to use
 	Network string `json:"network"`
 	// SwitchUUID is VDS UUID (only needed if there are multiple virtual distributed switches the network is assigned to)
