@@ -18,7 +18,6 @@ package internal
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"strings"
 	"text/template"
@@ -65,11 +64,7 @@ func addSSHKeysSection(userdata string, sshKeys []string) (string, error) {
 	if len(sshKeys) == 0 {
 		return userdata, nil
 	}
-	decoded, err := base64.StdEncoding.DecodeString(userdata)
-	if err != nil {
-		return "", errors.Wrap(err, "Decoding userdata failed")
-	}
-	s := string(decoded)
+	s := userdata
 	if strings.Contains(s, "ssh_authorized_keys:") {
 		return "", fmt.Errorf("userdata already contains key `ssh_authorized_keys`")
 	}
@@ -77,5 +72,5 @@ func addSSHKeysSection(userdata string, sshKeys []string) (string, error) {
 	for _, key := range sshKeys {
 		s = s + fmt.Sprintf("- %q\n", key)
 	}
-	return base64.StdEncoding.EncodeToString([]byte(s)), nil
+	return s, nil
 }
