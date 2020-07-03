@@ -18,6 +18,7 @@ package internal
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"text/template"
@@ -58,6 +59,33 @@ func ignitionFile(config *ignitionConfig) (string, error) {
 		return "", errors.Wrap(err, "Creating ignition file for CoreOS failed on executing template")
 	}
 	return buf.String(), nil
+}
+
+func prepareUserData(userdata string, sshKeys []string) (string, error) {
+	s := userdata
+	if strings.HasPrefix(userdata, "#!/") {
+		// assume it's a shell script and the ssh keys are appended directly to the authorized keys
+		s = packageInCloudInit(userdata)
+	}
+	return addSSHKeysSection(s, sshKeys)
+}
+
+func packageInCloudInit(userdata string) string {
+	content := base64.StdEncoding.EncodeToString([]byte(userdata))
+	rewrittenUserdata := fmt.Sprintf(`#cloud-config
+
+write_files:
+- encoding: b64
+  content: %s
+  owner: root:root
+  path: /root/cloud-init-script
+  permissions: '0555'
+
+runcmd:
+- /root/cloud-init-script
+- rm /root/cloud-init-script
+`, content)
+	return rewrittenUserdata
 }
 
 func addSSHKeysSection(userdata string, sshKeys []string) (string, error) {

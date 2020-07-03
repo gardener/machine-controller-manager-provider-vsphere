@@ -225,11 +225,11 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 			// Provide cloud-init as VApp.
 			// This assumes, that the image defines a VApp with the properties
 			// "hostname", "user-data" and "password" like the Ubuntu cloud images
-			newUserdata, err := addSSHKeysSection(cmd.userData, sshkeys)
+			newUserdata, err := prepareUserData(cmd.userData, sshkeys)
 			if err != nil {
 				return errors.Wrap(err, "setting VApp (default)")
 			}
-			props := map[string]string{"hostname": cmd.name, "user-data": newUserdata}
+			props := map[string]string{"hostname": cmd.name, "user-data": base64.StdEncoding.EncodeToString([]byte(newUserdata))}
 			// Login to machine happens normally via ssh and provided ssh keys
 			// For debugging proposes login on machine via vsphere web console might be helpful.
 			// In this case, the password can be set as environmental variable for the machine controller.
