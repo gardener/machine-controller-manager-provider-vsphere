@@ -29,6 +29,11 @@ import (
 	"k8s.io/klog"
 )
 
+const (
+	// vsphereDriverName is the name of the CSI driver for vSphere
+	vsphereDriverName = "csi.vsphere.vmware.com"
+)
+
 // CreateMachine handles a machine creation request
 // REQUIRED METHOD
 //
@@ -197,12 +202,13 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *driver.GetVolume
 	var volumeIDs []string
 	for i := range req.PVSpecs {
 		spec := req.PVSpecs[i]
-		if spec.VsphereVolume == nil {
-			// Not an vsphere volume
-			continue
+		if spec.VsphereVolume != nil {
+			volumeID := spec.VsphereVolume.VolumePath
+			volumeIDs = append(volumeIDs, volumeID)
+		} else if spec.CSI != nil && spec.CSI.Driver == vsphereDriverName && spec.CSI.VolumeHandle != "" {
+			name := spec.CSI.VolumeHandle
+			volumeIDs = append(volumeIDs, name)
 		}
-		volumeID := spec.VsphereVolume.VolumePath
-		volumeIDs = append(volumeIDs, volumeID)
 	}
 
 	klog.V(2).Infof("GetVolumeIDs machines request has been processed successfully (%d/%d).", len(volumeIDs), len(req.PVSpecs))
