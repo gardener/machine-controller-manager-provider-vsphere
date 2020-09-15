@@ -46,7 +46,7 @@ type MachinePlugin struct {
 	SPI PluginSPI
 }
 
-// NewVspherePlugin returns a new vSphere p
+// NewVspherePlugin returns a new vSphere plugin
 func NewVspherePlugin() *MachinePlugin {
 	return &MachinePlugin{
 		SPI: &internal.PluginSPIImpl{},

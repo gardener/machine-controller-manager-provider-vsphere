@@ -25,6 +25,8 @@ import (
 	"fmt"
 
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/driver"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/codes"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
 	"golang.org/x/net/context"
 	"k8s.io/klog"
 )
@@ -218,4 +220,12 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *driver.GetVolume
 		VolumeIDs: volumeIDs,
 	}
 	return Resp, nil
+}
+
+// GenerateMachineClassForMigration converts providerSpecificMachineClass to (generic) MachineClass
+func (ms *MachinePlugin) GenerateMachineClassForMigration(ctx context.Context, req *driver.GenerateMachineClassForMigrationRequest) (*driver.GenerateMachineClassForMigrationResponse, error) {
+	klog.V(1).Infof("Migrate request has been recieved for %v", req.MachineClass.Name)
+	defer klog.V(1).Infof("Migrate request has been processed for %v", req.MachineClass.Name)
+
+	return nil, status.Error(codes.Internal, "Migration cannot be done for this machineClass kind")
 }
