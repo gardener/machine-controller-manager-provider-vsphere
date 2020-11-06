@@ -25,8 +25,15 @@ import (
 	"fmt"
 
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/driver"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/codes"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
 	"golang.org/x/net/context"
 	"k8s.io/klog"
+)
+
+const (
+	// vsphereDriverName is the name of the CSI driver for vSphere
+	vsphereDriverName = "csi.vsphere.vmware.com"
 )
 
 // CreateMachine handles a machine creation request
@@ -197,12 +204,13 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *driver.GetVolume
 	var volumeIDs []string
 	for i := range req.PVSpecs {
 		spec := req.PVSpecs[i]
-		if spec.VsphereVolume == nil {
-			// Not an vsphere volume
-			continue
+		if spec.VsphereVolume != nil {
+			volumeID := spec.VsphereVolume.VolumePath
+			volumeIDs = append(volumeIDs, volumeID)
+		} else if spec.CSI != nil && spec.CSI.Driver == vsphereDriverName && spec.CSI.VolumeHandle != "" {
+			name := spec.CSI.VolumeHandle
+			volumeIDs = append(volumeIDs, name)
 		}
-		volumeID := spec.VsphereVolume.VolumePath
-		volumeIDs = append(volumeIDs, volumeID)
 	}
 
 	klog.V(2).Infof("GetVolumeIDs machines request has been processed successfully (%d/%d).", len(volumeIDs), len(req.PVSpecs))
@@ -212,4 +220,12 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *driver.GetVolume
 		VolumeIDs: volumeIDs,
 	}
 	return Resp, nil
+}
+
+// GenerateMachineClassForMigration converts providerSpecificMachineClass to (generic) MachineClass
+func (ms *MachinePlugin) GenerateMachineClassForMigration(ctx context.Context, req *driver.GenerateMachineClassForMigrationRequest) (*driver.GenerateMachineClassForMigrationResponse, error) {
+	klog.V(1).Infof("Migrate request has been recieved for %v", req.MachineClass.Name)
+	defer klog.V(1).Infof("Migrate request has been processed for %v", req.MachineClass.Name)
+
+	return nil, status.Error(codes.Internal, "Migration cannot be done for this machineClass kind")
 }
