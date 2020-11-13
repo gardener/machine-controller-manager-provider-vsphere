@@ -253,6 +253,9 @@ func (flag *SearchFlag) VirtualMachine() (*object.VirtualMachine, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected VirtualMachine entity, got %s", ref.Reference().Type)
 	}
+	if vm == nil {
+		return nil, fmt.Errorf("VirtualMachine reference is nil")
+	}
 
 	return vm, nil
 }
