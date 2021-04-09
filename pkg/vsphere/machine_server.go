@@ -34,6 +34,9 @@ import (
 const (
 	// vsphereDriverName is the name of the CSI driver for vSphere
 	vsphereDriverName = "csi.vsphere.vmware.com"
+
+	// Providervsphere is the provider reference for the MachineClass
+	Providervsphere = "vsphere"
 )
 
 // CreateMachine handles a machine creation request
@@ -62,6 +65,11 @@ const (
 func (ms *MachinePlugin) CreateMachine(ctx context.Context, req *driver.CreateMachineRequest) (*driver.CreateMachineResponse, error) {
 	// Log messages to track start of request
 	klog.V(2).Infof("Create machine request has been received for %q", req.Machine.Name)
+
+	// check if the machineClass is of the supported provider
+	if req.MachineClass.Provider != Providervsphere {
+		return nil, fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+	}
 
 	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
 	if err != nil {
@@ -100,6 +108,11 @@ func (ms *MachinePlugin) DeleteMachine(ctx context.Context, req *driver.DeleteMa
 	// Log messages to track delete request
 	klog.V(2).Infof("Machine deletion request has been received for %q", req.Machine.Name)
 
+	// check if the machineClass is of the supported provider
+	if req.MachineClass.Provider != Providervsphere {
+		return nil, fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+	}
+
 	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
 	if err != nil {
 		return nil, prepareErrorf(err, "Delete machine %q failed on decodeProviderSpecAndSecret", req.Machine.Name)
@@ -134,6 +147,11 @@ func (ms *MachinePlugin) DeleteMachine(ctx context.Context, req *driver.DeleteMa
 func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *driver.GetMachineStatusRequest) (*driver.GetMachineStatusResponse, error) {
 	// Log messages to track start of request
 	klog.V(2).Infof("Machine status request has been received for %q", req.Machine.Name)
+
+	// check if the machineClass is of the supported provider
+	if req.MachineClass.Provider != Providervsphere {
+		return nil, fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+	}
 
 	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
 	if err != nil {
@@ -171,6 +189,11 @@ func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *driver.GetMa
 func (ms *MachinePlugin) ListMachines(ctx context.Context, req *driver.ListMachinesRequest) (*driver.ListMachinesResponse, error) {
 	// Log messages to track start of request
 	klog.V(2).Infof("List machines request has been received")
+
+	// check if the machineClass is of the supported provider
+	if req.MachineClass.Provider != Providervsphere {
+		return nil, fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+	}
 
 	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
 	if err != nil {
