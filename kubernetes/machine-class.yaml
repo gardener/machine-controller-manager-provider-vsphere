@@ -3,6 +3,7 @@ kind: MachineClass
 metadata:
   name: test-mc
   namespace: default # Namespace where the controller would watch
+provider: vsphere
 providerSpec:
   sshKeys: # ssh-keys for accessing machine
     - "ssh-rsa AAAAB3...ShzA9 user@node"
