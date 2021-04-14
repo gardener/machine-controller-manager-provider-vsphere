@@ -68,7 +68,8 @@ func (ms *MachinePlugin) CreateMachine(ctx context.Context, req *driver.CreateMa
 
 	// check if the machineClass is of the supported provider
 	if req.MachineClass.Provider != Providervsphere {
-		return nil, fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+		err := fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
@@ -110,7 +111,8 @@ func (ms *MachinePlugin) DeleteMachine(ctx context.Context, req *driver.DeleteMa
 
 	// check if the machineClass is of the supported provider
 	if req.MachineClass.Provider != Providervsphere {
-		return nil, fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+		err := fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
@@ -150,7 +152,8 @@ func (ms *MachinePlugin) GetMachineStatus(ctx context.Context, req *driver.GetMa
 
 	// check if the machineClass is of the supported provider
 	if req.MachineClass.Provider != Providervsphere {
-		return nil, fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+		err := fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
@@ -192,7 +195,8 @@ func (ms *MachinePlugin) ListMachines(ctx context.Context, req *driver.ListMachi
 
 	// check if the machineClass is of the supported provider
 	if req.MachineClass.Provider != Providervsphere {
-		return nil, fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+		err := fmt.Errorf("Requested provider is '%s'. We support only '%s'", req.MachineClass.Provider, Providervsphere)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	providerSpec, err := decodeProviderSpecAndSecret(req.MachineClass, req.Secret)
