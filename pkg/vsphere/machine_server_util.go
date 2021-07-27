@@ -29,13 +29,23 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
-// decodeProviderSpecAndSecret converts request parameters to api.ProviderSpec
-func decodeProviderSpecAndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (*api.VsphereProviderSpec, error) {
+// decodeProviderSpecAndSecret converts request parameters to api.VsphereProviderSpec
+func decodeProviderSpecAndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (api.VsphereProviderSpec, error) {
+	if _, ok := secret.Data[api.VSphereKubeconfig]; ok {
+		spec, err := decodeProviderSpec2AndSecret(machineClass, secret)
+		return spec, err
+	}
+	spec, err := decodeProviderSpec1AndSecret(machineClass, secret)
+	return spec, err
+}
+
+// decodeProviderSpec1AndSecret converts request parameters to api.VsphereProviderSpec
+func decodeProviderSpec1AndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (*api.VsphereProviderSpec1, error) {
 	var (
-		providerSpec *api.VsphereProviderSpec
+		providerSpec *api.VsphereProviderSpec1
 	)
 
 	// Extract providerSpec
@@ -45,9 +55,31 @@ func decodeProviderSpecAndSecret(machineClass *v1alpha1.MachineClass, secret *co
 	}
 
 	//Validate the Spec and Secrets
-	ValidationErr := validation.ValidateVsphereProviderSpec(providerSpec, secret)
+	ValidationErr := validation.ValidateVsphereProviderSpec1(providerSpec, secret)
 	if ValidationErr != nil {
 		err = fmt.Errorf("Error while validating ProviderSpec %v", ValidationErr)
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return providerSpec, nil
+}
+
+// decodeProviderSpec2AndSecret converts request parameters to api.VsphereProviderSpec2
+func decodeProviderSpec2AndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (*api.VsphereProviderSpec2, error) {
+	var (
+		providerSpec *api.VsphereProviderSpec2
+	)
+
+	// Extract providerSpec
+	err := json.Unmarshal(machineClass.ProviderSpec.Raw, &providerSpec)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	//Validate the Spec and Secrets
+	ValidationErr := validation.ValidateVsphereProviderSpec2(providerSpec, secret)
+	if ValidationErr != nil {
+		err = fmt.Errorf("Error while validating ProviderSpec2 %v", ValidationErr)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

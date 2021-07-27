@@ -23,10 +23,15 @@ import "fmt"
 type MachineNotFoundError struct {
 	// Name is the machine name
 	Name string
-	// MachineID is the machine uuid
+	// MachineID is the machine uuid (only used for spec1)
 	MachineID string
+	// Namespace is namespace (only used for spec2)
+	Namespace string
 }
 
 func (e *MachineNotFoundError) Error() string {
+	if e.Namespace != "" {
+		return fmt.Sprintf("machine %s/%s not found", e.Namespace, e.Name)
+	}
 	return fmt.Sprintf("machine name=%s, uuid=%s not found", e.Name, e.MachineID)
 }

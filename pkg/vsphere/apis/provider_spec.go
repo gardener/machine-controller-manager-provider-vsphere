@@ -23,11 +23,22 @@ const (
 	TagMCMClusterName = "mcm.gardener.cloud/cluster"
 	// TagMCMRole is the tag key for tagging a VM with its role (e.g 'node')
 	TagMCMRole = "mcm.gardener.cloud/role"
+
+	// LabelMCMVSphere is the tag key for labeling a VM as a managed machine
+	LabelMCMVSphere = "mcm.gardener.cloud/machine"
+
+	// VSphereKubeconfig is the key for the kubeconfig in the credentials secret
+	VSphereKubeconfig = "vsphereKubeconfig"
 )
 
-// VsphereProviderSpec contains the fields of
+// VsphereProviderSpec is an interface to hide the concrete spec version
+type VsphereProviderSpec interface {
+	SpecVersion() int
+}
+
+// VsphereProviderSpec1 contains the fields of
 // provider spec that the plugin expects
-type VsphereProviderSpec struct {
+type VsphereProviderSpec1 struct {
 	// Region is the vSphere region
 	Region string `json:"region"`
 
@@ -97,6 +108,62 @@ type VsphereProviderSpec struct {
 	// +optional
 	Tags map[string]string `json:"tags,omitempty"`
 }
+
+// SpecVersion returns spec version
+func (s *VsphereProviderSpec1) SpecVersion() int { return 1 }
+
+// VsphereProviderSpec2 contains the fields of
+// provider spec that the plugin expects
+type VsphereProviderSpec2 struct {
+	// Namespace is the vSphere workload namespace
+	Namespace string `json:"namespace"`
+
+	// ImageName describes the name of a VirtualMachineImage that is to be used as the base Operating System image of
+	// the desired VirtualMachine instances.  The VirtualMachineImage resources can be introspected to discover identifying
+	// attributes that may help users to identify the desired image to use.
+	ImageName string `json:"imageName"`
+
+	// ClassName describes the name of a VirtualMachineClass that is to be used as the overlaid resource configuration
+	// of VirtualMachine.  A VirtualMachineClass is used to further customize the attributes of the VirtualMachine
+	// instance.  See VirtualMachineClass for more description.
+	ClassName string `json:"className"`
+
+	// NetworkName is the name of the network for the virtualmachines.vmoperator.vmware.com resource
+	NetworkName string `json:"networkName"`
+	// NetworkType is the type of the network for the virtualmachines.vmoperator.vmware.com resource
+	NetworkType string `json:"networkType"`
+
+	// StorageClass describes the name of a StorageClass that should be used to configure storage-related attributes of the VirtualMachine
+	// instance.
+	// +optional
+	StorageClass *string `json:"storageClass,omitempty"`
+
+	// ResourcePolicyName describes the name of a VirtualMachineSetResourcePolicy to be used when creating the
+	// VirtualMachine instance.
+	// +optional
+	ResourcePolicyName *string `json:"resourcePolicyName,omitempty"`
+
+	// TODO
+	// SystemDisk specifies the system disk
+	// +optional
+	//SystemDisk *VSphereSystemDisk `json:"systemDisk,omitempty"`
+
+	// TODO
+	// ExtraConfig allows to specify additional VM options.
+	// e.g. sched.swap.vmxSwapEnabled=false to disable the VMX process swap file
+	// +optional
+	//ExtraConfig map[string]string `json:"extraConfig,omitempty"`
+
+	// SSHKeys is an optional array of ssh public keys to deploy to VM (may already be included in UserData)
+	// +optional
+	SSHKeys []string `json:"sshKeys,omitempty"`
+	// Tags to be placed on the VM
+	// +optional
+	Tags map[string]string `json:"tags,omitempty"`
+}
+
+// SpecVersion returns spec version
+func (s *VsphereProviderSpec2) SpecVersion() int { return 2 }
 
 // VSphereSystemDisk specifies system disk of a machine
 type VSphereSystemDisk struct {

@@ -23,7 +23,7 @@ go install -mod=vendor golang.org/x/lint/golint
 export GOFLAGS=-mod=vendor
 
 ###############################################################################
-PACKAGES="$(go list -e ./... | grep -vE '/vendor/|/internal/flags')"
+PACKAGES="$(go list -e ./... | grep -vE '/vendor/|/internal/vmomi/flags')"
 PACKAGES_DIRS="$(echo ${PACKAGES} | sed "s|github.com/gardener/machine-controller-manager-provider-vsphere|.|g")"
 
 # Execute static code checks.
