@@ -41,20 +41,25 @@ type PluginSPIImpl struct{}
 const providerPrefix = "vsphere://"
 
 // CreateMachine creates a VM by cloning from a template
-func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec1, secrets *corev1.Secret) (string, error) {
+func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return "", err
 	}
 	defer client.Logout(ctx)
 
-	cmd := newClone(machineName, providerSpec, string(secrets.Data["userData"]))
+	v1 := providerSpec.V1
+	if v1 == nil {
+		return "", fmt.Errorf("missing v1")
+	}
+
+	cmd := newClone(machineName, v1, providerSpec.SSHKeys, providerSpec.Tags, string(secrets.Data["userData"]))
 	err = cmd.Run(ctx, client)
 	if err != nil {
 		return "", err
 	}
 	machineID := cmd.Clone.UUID(ctx)
-	providerID := spi.encodeProviderID(providerSpec.Region, machineID)
+	providerID := spi.encodeProviderID(v1.Region, machineID)
 	return providerID, nil
 }
 
@@ -135,12 +140,17 @@ func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName stri
 }
 
 // ListMachines lists all VMs in the DC or folder
-func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec1, secrets *corev1.Secret) (map[string]string, error) {
+func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (map[string]string, error) {
 	client, err := createVsphereClient(ctx, secrets)
 	if err != nil {
 		return nil, err
 	}
 	defer client.Logout(ctx)
+
+	v1 := providerSpec.V1
+	if v1 == nil {
+		return nil, fmt.Errorf("missing v1")
+	}
 
 	machineList := map[string]string{}
 
@@ -158,18 +168,18 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 
 		if relevantTags.Matches(customValues) {
 			uuid := vm.UUID(ctx)
-			providerID := spi.encodeProviderID(providerSpec.Region, uuid)
+			providerID := spi.encodeProviderID(v1.Region, uuid)
 			machineList[providerID] = obj.Name
 		}
 		return nil
 	}
 
-	err = visitVirtualMachines(ctx, client, providerSpec, visitor)
+	err = visitVirtualMachines(ctx, client, v1, visitor)
 	if err != nil {
 		return nil, err
 	}
 
-	klog.V(2).Infof("List machines request for dc %s, folder %s found %d machines", providerSpec.Datacenter, providerSpec.Folder, len(machineList))
+	klog.V(2).Infof("List machines request for dc %s, folder %s found %d machines", v1.Datacenter, v1.Folder, len(machineList))
 
 	return machineList, nil
 }

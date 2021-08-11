@@ -66,7 +66,7 @@ func init() {
 }
 
 // CreateMachine creates a VM by cloning from a template
-func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec2, secrets *corev1.Secret) (string, error) {
+func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	client, err := createVsphereKubernetesClient(ctx, secrets)
 	if err != nil {
 		return "", fmt.Errorf("creating vsphere k8s client failed: %w", err)
@@ -77,10 +77,14 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 		return "", fmt.Errorf("adding ssh keys to userdata failed: %w", err)
 	}
 
+	v2 := providerSpec.V2
+	if v2 == nil {
+		return "", fmt.Errorf("missing v2")
+	}
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName(machineName),
-			Namespace: providerSpec.Namespace,
+			Namespace: v2.Namespace,
 		},
 	}
 	_, err = controllerutil.CreateOrUpdate(ctx, client, configMap, func() error {
@@ -101,18 +105,18 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 		return "", fmt.Errorf("missing relevant tags")
 	}
 
-	vm := createEmptyVirtualMachine(machineName, providerSpec.Namespace)
-	vm.Spec.ClassName = providerSpec.ClassName
+	vm := createEmptyVirtualMachine(machineName, v2.Namespace)
+	vm.Spec.ClassName = v2.ClassName
 	vm.Spec.NetworkInterfaces = []vmopapi.VirtualMachineNetworkInterface{
-		{NetworkType: providerSpec.NetworkType, NetworkName: providerSpec.NetworkName},
+		{NetworkType: v2.NetworkType, NetworkName: v2.NetworkName},
 	}
-	if providerSpec.StorageClass != nil {
-		vm.Spec.StorageClass = *providerSpec.StorageClass
+	if v2.StorageClass != nil {
+		vm.Spec.StorageClass = *v2.StorageClass
 	}
-	if providerSpec.ResourcePolicyName != nil {
-		vm.Spec.ResourcePolicyName = *providerSpec.ResourcePolicyName
+	if v2.ResourcePolicyName != nil {
+		vm.Spec.ResourcePolicyName = *v2.ResourcePolicyName
 	}
-	vm.Spec.ImageName = providerSpec.ImageName
+	vm.Spec.ImageName = v2.ImageName
 	vm.Spec.VmMetadata = &vmopapi.VirtualMachineMetadata{
 		ConfigMapName: configMap.Name,
 		Transport:     "ExtraConfig",
@@ -141,7 +145,7 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 		return "", fmt.Errorf("timeout on vm create of virtual machine %s. phase=%s", machineName, vm.Status.Phase)
 	}
 
-	providerID := spi.encodeProviderID(providerSpec.Namespace, vm.Status.InstanceUUID)
+	providerID := spi.encodeProviderID(v2.Namespace, vm.Status.InstanceUUID)
 	return providerID, nil
 }
 
@@ -229,10 +233,15 @@ func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName stri
 }
 
 // ListMachines lists all VMs in the DC or folder
-func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec2, secrets *corev1.Secret) (map[string]string, error) {
+func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (map[string]string, error) {
 	client, err := createVsphereKubernetesClient(ctx, secrets)
 	if err != nil {
 		return nil, fmt.Errorf("creating vsphere k8s client failed: %w", err)
+	}
+
+	v2 := providerSpec.V2
+	if v2 == nil {
+		return nil, fmt.Errorf("missing v2")
 	}
 
 	machineList := map[string]string{}
@@ -244,20 +253,20 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 	vms := &vmopapi.VirtualMachineList{}
 	labels := relevantTags.GetLabels()
 	labels[api.LabelMCMVSphere] = "true"
-	err = client.List(ctx, vms, ctrlClient.InNamespace(providerSpec.Namespace), ctrlClient.MatchingLabels(labels))
+	err = client.List(ctx, vms, ctrlClient.InNamespace(v2.Namespace), ctrlClient.MatchingLabels(labels))
 	if err != nil {
-		return nil, fmt.Errorf("listing virtual machines in namespace %s failed: %w", providerSpec.Namespace, err)
+		return nil, fmt.Errorf("listing virtual machines in namespace %s failed: %w", v2.Namespace, err)
 	}
 
 	for _, vm := range vms.Items {
 		machineName := vm.Name
 		if vm.Status.InstanceUUID != "" {
-			providerID := spi.encodeProviderID(providerSpec.Namespace, vm.Status.InstanceUUID)
+			providerID := spi.encodeProviderID(v2.Namespace, vm.Status.InstanceUUID)
 			machineList[providerID] = machineName
 		}
 	}
 
-	klog.V(2).Infof("List machines request for namespace %s found %d machines", providerSpec.Namespace, len(machineList))
+	klog.V(2).Infof("List machines request for namespace %s found %d machines", v2.Namespace, len(machineList))
 
 	return machineList, nil
 }

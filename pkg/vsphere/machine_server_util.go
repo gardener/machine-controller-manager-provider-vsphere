@@ -43,22 +43,22 @@ func decodeProviderSpecAndSecret(machineClass *v1alpha1.MachineClass, secret *co
 	}
 
 	if providerSpec.V1 != nil {
-		err := validateSpec1(providerSpec.V1, secret)
+		err := validateSpecV1(providerSpec, secret)
 		return providerSpec, err
 	}
 
 	if providerSpec.V2 != nil {
-		err := validateSpec2(providerSpec.V2, secret)
+		err := validateSpecV2(providerSpec, secret)
 		return providerSpec, err
 	}
 
 	return nil, fmt.Errorf("invalid providerSpec")
 }
 
-// validateSpec1 validates api.VsphereProviderSpec1
-func validateSpec1(spec1 *api.VsphereProviderSpec1, secret *corev1.Secret) error {
+// validateSpecV1 validates api.VsphereProviderSpec1
+func validateSpecV1(spec *api.VsphereProviderSpec, secret *corev1.Secret) error {
 	//Validate the Spec and Secrets
-	ValidationErr := validation.ValidateVsphereProviderSpec1(spec1, secret)
+	ValidationErr := validation.ValidateVsphereProviderSpec1(spec, secret)
 	if ValidationErr != nil {
 		err := fmt.Errorf("Error while validating ProviderSpec V1 %v", ValidationErr)
 		return status.Error(codes.Internal, err.Error())
@@ -66,10 +66,10 @@ func validateSpec1(spec1 *api.VsphereProviderSpec1, secret *corev1.Secret) error
 	return nil
 }
 
-// validateSpec2 validates api.VsphereProviderSpec2
-func validateSpec2(spec2 *api.VsphereProviderSpec2, secret *corev1.Secret) error {
+// validateSpecV2 validates api.VsphereProviderSpec2
+func validateSpecV2(spec *api.VsphereProviderSpec, secret *corev1.Secret) error {
 	//Validate the Spec and Secrets
-	ValidationErr := validation.ValidateVsphereProviderSpec2(spec2, secret)
+	ValidationErr := validation.ValidateVsphereProviderSpec2(spec, secret)
 	if ValidationErr != nil {
 		err := fmt.Errorf("Error while validating ProviderSpec V2 %v", ValidationErr)
 		return status.Error(codes.Internal, err.Error())

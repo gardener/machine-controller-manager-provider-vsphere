@@ -26,19 +26,20 @@ import (
 )
 
 // ValidateVsphereProviderSpec1 validates Vsphere provider spec
-func ValidateVsphereProviderSpec1(spec *api.VsphereProviderSpec1, secrets *corev1.Secret) []error {
+func ValidateVsphereProviderSpec1(spec *api.VsphereProviderSpec, secrets *corev1.Secret) []error {
 	var allErrs []error
 
-	if "" == spec.Datastore && "" == spec.DatastoreCluster {
+	v1 := spec.V1
+	if "" == v1.Datastore && "" == v1.DatastoreCluster {
 		allErrs = append(allErrs, fmt.Errorf("either datastoreCluster or datastore field is required"))
 	}
-	if "" == spec.TemplateVM {
+	if "" == v1.TemplateVM {
 		allErrs = append(allErrs, fmt.Errorf("templateVM is a required field"))
 	}
-	if "" == spec.ComputeCluster && "" == spec.ResourcePool && "" == spec.HostSystem {
+	if "" == v1.ComputeCluster && "" == v1.ResourcePool && "" == v1.HostSystem {
 		allErrs = append(allErrs, fmt.Errorf("either computeCluster or resourcePool or hostSystem field is required"))
 	}
-	if "" == spec.Network {
+	if "" == v1.Network {
 		allErrs = append(allErrs, fmt.Errorf("network is a required field"))
 	}
 
@@ -78,22 +79,23 @@ func validateSecrets(secret *corev1.Secret) []error {
 }
 
 // ValidateVsphereProviderSpec2 validates Vsphere provider spec2
-func ValidateVsphereProviderSpec2(spec *api.VsphereProviderSpec2, secrets *corev1.Secret) []error {
+func ValidateVsphereProviderSpec2(spec *api.VsphereProviderSpec, secrets *corev1.Secret) []error {
 	var allErrs []error
 
-	if "" == spec.Namespace {
+	v2 := spec.V2
+	if "" == v2.Namespace {
 		allErrs = append(allErrs, fmt.Errorf("namespace is a required field"))
 	}
-	if "" == spec.ImageName {
+	if "" == v2.ImageName {
 		allErrs = append(allErrs, fmt.Errorf("imageName is a required field"))
 	}
-	if "" == spec.NetworkType {
+	if "" == v2.NetworkType {
 		allErrs = append(allErrs, fmt.Errorf("networkType is a required field"))
 	}
-	if "" == spec.NetworkName {
+	if "" == v2.NetworkName {
 		allErrs = append(allErrs, fmt.Errorf("networkName is a required field"))
 	}
-	if "" == spec.ClassName {
+	if "" == v2.ClassName {
 		allErrs = append(allErrs, fmt.Errorf("className is a required field"))
 	}
 

@@ -45,10 +45,10 @@ func NewPluginSPISwitch() *PluginSPISwitch {
 // CreateMachine creates a VM by cloning from a template
 func (spi *PluginSPISwitch) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	if providerSpec.V1 != nil {
-		return spi.spec1.CreateMachine(ctx, machineName, providerSpec.V1, secrets)
+		return spi.spec1.CreateMachine(ctx, machineName, providerSpec, secrets)
 	}
 	if providerSpec.V2 != nil {
-		return spi.spec2.CreateMachine(ctx, machineName, providerSpec.V2, secrets)
+		return spi.spec2.CreateMachine(ctx, machineName, providerSpec, secrets)
 	}
 	return "", fmt.Errorf("invalid spec version")
 }
@@ -90,10 +90,10 @@ func (spi *PluginSPISwitch) GetMachineStatus(ctx context.Context, machineName st
 // ListMachines lists all VMs in the DC or folder
 func (spi *PluginSPISwitch) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (map[string]string, error) {
 	if providerSpec.V1 != nil {
-		return spi.spec1.ListMachines(ctx, providerSpec.V1, secrets)
+		return spi.spec1.ListMachines(ctx, providerSpec, secrets)
 	}
 	if providerSpec.V2 != nil {
-		return spi.spec2.ListMachines(ctx, providerSpec.V2, secrets)
+		return spi.spec2.ListMachines(ctx, providerSpec, secrets)
 	}
 	return nil, fmt.Errorf("invalid spec version")
 }

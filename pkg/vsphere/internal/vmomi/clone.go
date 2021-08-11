@@ -50,6 +50,8 @@ type clone struct {
 	name     string
 	userData string
 	spec     *api.VsphereProviderSpec1
+	sshKeys  []string
+	tags     map[string]string
 
 	NetworkFlag *flags.NetworkFlag
 
@@ -66,8 +68,8 @@ type clone struct {
 	Clone *object.VirtualMachine
 }
 
-func newClone(machineName string, spec *api.VsphereProviderSpec1, userData string) *clone {
-	return &clone{name: machineName, spec: spec, userData: userData}
+func newClone(machineName string, spec *api.VsphereProviderSpec1, sshKeys []string, tags map[string]string, userData string) *clone {
+	return &clone{name: machineName, spec: spec, sshKeys: sshKeys, tags: tags, userData: userData}
 }
 
 func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
@@ -165,9 +167,9 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 	}
 	klog.V(4).Infof("Template guestId: %s, used guestId: %s", props.Config.GuestId, guestID)
 
-	sshkeys := make([]string, len(cmd.spec.SSHKeys))
-	for i := range cmd.spec.SSHKeys {
-		sshkeys[i] = strings.TrimSpace(cmd.spec.SSHKeys[i])
+	sshkeys := make([]string, len(cmd.sshKeys))
+	for i := range cmd.sshKeys {
+		sshkeys[i] = strings.TrimSpace(cmd.sshKeys[i])
 	}
 	vapp := cmd.spec.VApp
 	if vapp == nil {
@@ -282,13 +284,13 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 		return errors.Wrap(err, "reconfiguring VM failed")
 	}
 
-	if len(cmd.spec.Tags) > 0 {
+	if len(cmd.tags) > 0 {
 		manager, err := object.GetCustomFieldsManager(client.Client)
 		if err != nil {
 			return errors.Wrap(err, "Set tags: GetCustomFieldsManager failed")
 		}
 
-		for k, v := range cmd.spec.Tags {
+		for k, v := range cmd.tags {
 			key, err := manager.FindKey(ctx, k)
 			if err != nil {
 				if err != object.ErrKeyNameNotFound {

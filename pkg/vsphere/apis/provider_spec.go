@@ -35,6 +35,13 @@ const (
 type VsphereProviderSpec struct {
 	V1 *VsphereProviderSpec1 `json:"v1,omitempty"`
 	V2 *VsphereProviderSpec2 `json:"v2,omitempty"`
+
+	// SSHKeys is an optional array of ssh public keys to deploy to VM (may already be included in UserData)
+	// +optional
+	SSHKeys []string `json:"sshKeys,omitempty"`
+	// Tags to be placed on the VM
+	// +optional
+	Tags map[string]string `json:"tags,omitempty"`
 }
 
 // VsphereProviderSpec1 contains the fields of
@@ -101,13 +108,6 @@ type VsphereProviderSpec1 struct {
 	// Customization is an experimental option to add a CustomizationSpec
 	// +optional
 	Customization string `json:"customization,omitempty"`
-
-	// SSHKeys is an optional array of ssh public keys to deploy to VM (may already be included in UserData)
-	// +optional
-	SSHKeys []string `json:"sshKeys,omitempty"`
-	// Tags to be placed on the VM
-	// +optional
-	Tags map[string]string `json:"tags,omitempty"`
 }
 
 // SpecVersion returns spec version
@@ -154,13 +154,6 @@ type VsphereProviderSpec2 struct {
 	// e.g. sched.swap.vmxSwapEnabled=false to disable the VMX process swap file
 	// +optional
 	//ExtraConfig map[string]string `json:"extraConfig,omitempty"`
-
-	// SSHKeys is an optional array of ssh public keys to deploy to VM (may already be included in UserData)
-	// +optional
-	SSHKeys []string `json:"sshKeys,omitempty"`
-	// Tags to be placed on the VM
-	// +optional
-	Tags map[string]string `json:"tags,omitempty"`
 }
 
 // SpecVersion returns spec version
