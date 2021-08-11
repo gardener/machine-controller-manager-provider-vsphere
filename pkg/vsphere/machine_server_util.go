@@ -33,20 +33,8 @@ import (
 )
 
 // decodeProviderSpecAndSecret converts request parameters to api.VsphereProviderSpec
-func decodeProviderSpecAndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (api.VsphereProviderSpec, error) {
-	if _, ok := secret.Data[api.VSphereKubeconfig]; ok {
-		spec, err := decodeProviderSpec2AndSecret(machineClass, secret)
-		return spec, err
-	}
-	spec, err := decodeProviderSpec1AndSecret(machineClass, secret)
-	return spec, err
-}
-
-// decodeProviderSpec1AndSecret converts request parameters to api.VsphereProviderSpec
-func decodeProviderSpec1AndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (*api.VsphereProviderSpec1, error) {
-	var (
-		providerSpec *api.VsphereProviderSpec1
-	)
+func decodeProviderSpecAndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (*api.VsphereProviderSpec, error) {
+	var providerSpec *api.VsphereProviderSpec
 
 	// Extract providerSpec
 	err := json.Unmarshal(machineClass.ProviderSpec.Raw, &providerSpec)
@@ -54,36 +42,39 @@ func decodeProviderSpec1AndSecret(machineClass *v1alpha1.MachineClass, secret *c
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	//Validate the Spec and Secrets
-	ValidationErr := validation.ValidateVsphereProviderSpec1(providerSpec, secret)
-	if ValidationErr != nil {
-		err = fmt.Errorf("Error while validating ProviderSpec %v", ValidationErr)
-		return nil, status.Error(codes.Internal, err.Error())
+	if providerSpec.V1 != nil {
+		err := validateSpec1(providerSpec.V1, secret)
+		return providerSpec, err
 	}
 
-	return providerSpec, nil
+	if providerSpec.V2 != nil {
+		err := validateSpec2(providerSpec.V2, secret)
+		return providerSpec, err
+	}
+
+	return nil, fmt.Errorf("invalid providerSpec")
 }
 
-// decodeProviderSpec2AndSecret converts request parameters to api.VsphereProviderSpec2
-func decodeProviderSpec2AndSecret(machineClass *v1alpha1.MachineClass, secret *corev1.Secret) (*api.VsphereProviderSpec2, error) {
-	var (
-		providerSpec *api.VsphereProviderSpec2
-	)
-
-	// Extract providerSpec
-	err := json.Unmarshal(machineClass.ProviderSpec.Raw, &providerSpec)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
+// validateSpec1 validates api.VsphereProviderSpec1
+func validateSpec1(spec1 *api.VsphereProviderSpec1, secret *corev1.Secret) error {
 	//Validate the Spec and Secrets
-	ValidationErr := validation.ValidateVsphereProviderSpec2(providerSpec, secret)
+	ValidationErr := validation.ValidateVsphereProviderSpec1(spec1, secret)
 	if ValidationErr != nil {
-		err = fmt.Errorf("Error while validating ProviderSpec2 %v", ValidationErr)
-		return nil, status.Error(codes.Internal, err.Error())
+		err := fmt.Errorf("Error while validating ProviderSpec V1 %v", ValidationErr)
+		return status.Error(codes.Internal, err.Error())
 	}
+	return nil
+}
 
-	return providerSpec, nil
+// validateSpec2 validates api.VsphereProviderSpec2
+func validateSpec2(spec2 *api.VsphereProviderSpec2, secret *corev1.Secret) error {
+	//Validate the Spec and Secrets
+	ValidationErr := validation.ValidateVsphereProviderSpec2(spec2, secret)
+	if ValidationErr != nil {
+		err := fmt.Errorf("Error while validating ProviderSpec V2 %v", ValidationErr)
+		return status.Error(codes.Internal, err.Error())
+	}
+	return nil
 }
 
 func prepareErrorf(err error, format string, args ...interface{}) error {

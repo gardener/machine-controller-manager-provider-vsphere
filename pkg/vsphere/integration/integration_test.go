@@ -33,10 +33,9 @@ import (
 // TODO: Update secret field from api.Secrets to corev1.Secret in integration tests
 
 type integrationConfig struct {
-	MachineName   string                    `json:"machineName"`
-	ProviderSpec  *api.VsphereProviderSpec1 `json:"providerSpec"`
-	ProviderSpec2 *api.VsphereProviderSpec2 `json:"providerSpec2"`
-	Secrets       *corev1.Secret            `json:"secrets"`
+	MachineName  string                   `json:"machineName"`
+	ProviderSpec *api.VsphereProviderSpec `json:"providerSpec"`
+	Secrets      *corev1.Secret           `json:"secrets"`
 }
 
 // TestPluginSPIImpl tests creation and deleting of a VM via vSphere API.
@@ -61,13 +60,9 @@ func TestPluginSPIImpl(t *testing.T) {
 		return
 	}
 
-	var providerSpec api.VsphereProviderSpec
-	if cfg.ProviderSpec != nil {
-		providerSpec = cfg.ProviderSpec
-	} else if cfg.ProviderSpec2 != nil {
-		providerSpec = cfg.ProviderSpec2
-	} else {
-		t.Errorf("neither field 'providerSpec' nor 'providerSpec2' set in integrationConfig from %s", configPath)
+	providerSpec := cfg.ProviderSpec
+	if providerSpec.V1 == nil && providerSpec.V2 == nil {
+		t.Errorf("neither field 'providerSpec.v1' nor 'providerSpec.v2' set in integrationConfig from %s", configPath)
 		return
 	}
 

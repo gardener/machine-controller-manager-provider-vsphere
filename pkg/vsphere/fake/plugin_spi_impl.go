@@ -31,26 +31,26 @@ import (
 type PluginSPIImpl struct{}
 
 // CreateMachine creates a VM by cloning from a template
-func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
+func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	return "", fmt.Errorf("fake not implemented yet")
 }
 
 // DeleteMachine deletes a VM by name
-func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
+func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	return "", fmt.Errorf("fake not implemented yet")
 }
 
 // ShutDownMachine shuts down a machine by name
-func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName string, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
+func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	return "", fmt.Errorf("fake not implemented yet")
 }
 
 // GetMachineStatus checks for existence of VM by name
-func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName string, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
+func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
 	return "", fmt.Errorf("fake not implemented yet")
 }
 
 // ListMachines lists all VMs in the DC or folder
-func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (map[string]string, error) {
+func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (map[string]string, error) {
 	return nil, fmt.Errorf("fake not implemented yet")
 }

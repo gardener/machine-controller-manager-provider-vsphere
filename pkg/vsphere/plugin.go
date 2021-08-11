@@ -33,11 +33,11 @@ import (
 // You can optionally enhance this interface to add interface methods here
 // You can use it to mock cloud provider calls
 type PluginSPI interface {
-	CreateMachine(ctx context.Context, machineName string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (providerID string, err error)
-	DeleteMachine(ctx context.Context, machineName, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
-	GetMachineStatus(ctx context.Context, machineName, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
-	ListMachines(ctx context.Context, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (providerIDList map[string]string, err error)
-	ShutDownMachine(ctx context.Context, machineName, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
+	CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (providerID string, err error)
+	DeleteMachine(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
+	GetMachineStatus(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
+	ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (providerIDList map[string]string, err error)
+	ShutDownMachine(ctx context.Context, machineName, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (foundProviderID string, err error)
 }
 
 // MachinePlugin implements the cmi.MachineServer

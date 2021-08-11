@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/apis/tags"
 	"github.com/gardener/machine-controller-manager-provider-vsphere/pkg/vsphere/errors"
 	vmopapi "github.com/vmware-tanzu/vm-operator-api/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -95,6 +96,11 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 		return "", fmt.Errorf("creating/updating configmap %s failed: %w", configMap.Name, err)
 	}
 
+	relevantTags, _ := tags.NewRelevantTags(providerSpec.Tags)
+	if relevantTags == nil {
+		return "", fmt.Errorf("missing relevant tags")
+	}
+
 	vm := createEmptyVirtualMachine(machineName, providerSpec.Namespace)
 	vm.Spec.ClassName = providerSpec.ClassName
 	vm.Spec.NetworkInterfaces = []vmopapi.VirtualMachineNetworkInterface{
@@ -111,13 +117,11 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 		ConfigMapName: configMap.Name,
 		Transport:     "ExtraConfig",
 	}
-	vm.Annotations = providerSpec.Tags
-	if vm.Annotations == nil {
-		vm.Annotations = map[string]string{}
-	}
+	vm.Annotations = relevantTags.NonRelevant(providerSpec.Tags)
 	vm.Annotations["vmoperator.vmware.com/image-supported-check"] = "disable"
 	vm.Annotations["vmoperator.vmware.com/vsphere-customization"] = "disable"
-	vm.Labels = map[string]string{api.LabelMCMVSphere: "true"}
+	vm.Labels = relevantTags.GetLabels()
+	vm.Labels[api.LabelMCMVSphere] = "true"
 	vm.Spec.PowerState = vmopapi.VirtualMachinePoweredOn
 
 	err = client.Create(ctx, vm)
@@ -231,13 +235,20 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 		return nil, fmt.Errorf("creating vsphere k8s client failed: %w", err)
 	}
 
+	machineList := map[string]string{}
+	relevantTags, _ := tags.NewRelevantTags(providerSpec.Tags)
+	if relevantTags == nil {
+		return machineList, nil
+	}
+
 	vms := &vmopapi.VirtualMachineList{}
-	labels := map[string]string{api.LabelMCMVSphere: "true"}
+	labels := relevantTags.GetLabels()
+	labels[api.LabelMCMVSphere] = "true"
 	err = client.List(ctx, vms, ctrlClient.InNamespace(providerSpec.Namespace), ctrlClient.MatchingLabels(labels))
 	if err != nil {
 		return nil, fmt.Errorf("listing virtual machines in namespace %s failed: %w", providerSpec.Namespace, err)
 	}
-	machineList := map[string]string{}
+
 	for _, vm := range vms.Items {
 		machineName := vm.Name
 		if vm.Status.InstanceUUID != "" {

@@ -43,61 +43,57 @@ func NewPluginSPISwitch() *PluginSPISwitch {
 }
 
 // CreateMachine creates a VM by cloning from a template
-func (spi *PluginSPISwitch) CreateMachine(ctx context.Context, machineName string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
-	switch providerSpec.SpecVersion() {
-	case 1:
-		return spi.spec1.CreateMachine(ctx, machineName, providerSpec.(*api.VsphereProviderSpec1), secrets)
-	case 2:
-		return spi.spec2.CreateMachine(ctx, machineName, providerSpec.(*api.VsphereProviderSpec2), secrets)
-	default:
-		return "", fmt.Errorf("invalid spec version")
+func (spi *PluginSPISwitch) CreateMachine(ctx context.Context, machineName string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
+	if providerSpec.V1 != nil {
+		return spi.spec1.CreateMachine(ctx, machineName, providerSpec.V1, secrets)
 	}
+	if providerSpec.V2 != nil {
+		return spi.spec2.CreateMachine(ctx, machineName, providerSpec.V2, secrets)
+	}
+	return "", fmt.Errorf("invalid spec version")
 }
 
 // DeleteMachine deletes a VM by name
-func (spi *PluginSPISwitch) DeleteMachine(ctx context.Context, machineName string, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
-	switch providerSpec.SpecVersion() {
-	case 1:
-		return spi.spec1.DeleteMachine(ctx, machineName, providerID, providerSpec.(*api.VsphereProviderSpec1), secrets)
-	case 2:
-		return spi.spec2.DeleteMachine(ctx, machineName, providerID, providerSpec.(*api.VsphereProviderSpec2), secrets)
-	default:
-		return "", fmt.Errorf("invalid spec version")
+func (spi *PluginSPISwitch) DeleteMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
+	if providerSpec.V1 != nil {
+		return spi.spec1.DeleteMachine(ctx, machineName, providerID, providerSpec.V1, secrets)
 	}
+	if providerSpec.V2 != nil {
+		return spi.spec2.DeleteMachine(ctx, machineName, providerID, providerSpec.V2, secrets)
+	}
+	return "", fmt.Errorf("invalid spec version")
 }
 
 // ShutDownMachine shuts down a machine by name
-func (spi *PluginSPISwitch) ShutDownMachine(ctx context.Context, machineName string, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
-	switch providerSpec.SpecVersion() {
-	case 1:
-		return spi.spec1.ShutDownMachine(ctx, machineName, providerID, providerSpec.(*api.VsphereProviderSpec1), secrets)
-	case 2:
-		return spi.spec2.ShutDownMachine(ctx, machineName, providerID, providerSpec.(*api.VsphereProviderSpec2), secrets)
-	default:
-		return "", fmt.Errorf("invalid spec version")
+func (spi *PluginSPISwitch) ShutDownMachine(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
+	if providerSpec.V1 != nil {
+		return spi.spec1.ShutDownMachine(ctx, machineName, providerID, providerSpec.V1, secrets)
 	}
+	if providerSpec.V2 != nil {
+		return spi.spec2.ShutDownMachine(ctx, machineName, providerID, providerSpec.V2, secrets)
+	}
+	return "", fmt.Errorf("invalid spec version")
 }
 
 // GetMachineStatus checks for existence of VM by name
-func (spi *PluginSPISwitch) GetMachineStatus(ctx context.Context, machineName string, providerID string, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
-	switch providerSpec.SpecVersion() {
-	case 1:
-		return spi.spec1.GetMachineStatus(ctx, machineName, providerID, providerSpec.(*api.VsphereProviderSpec1), secrets)
-	case 2:
-		return spi.spec2.GetMachineStatus(ctx, machineName, providerID, providerSpec.(*api.VsphereProviderSpec2), secrets)
-	default:
-		return "", fmt.Errorf("invalid spec version")
+func (spi *PluginSPISwitch) GetMachineStatus(ctx context.Context, machineName string, providerID string, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (string, error) {
+	if providerSpec.V1 != nil {
+		return spi.spec1.GetMachineStatus(ctx, machineName, providerID, providerSpec.V1, secrets)
 	}
+	if providerSpec.V2 != nil {
+		return spi.spec2.GetMachineStatus(ctx, machineName, providerID, providerSpec.V2, secrets)
+	}
+	return "", fmt.Errorf("invalid spec version")
+
 }
 
 // ListMachines lists all VMs in the DC or folder
-func (spi *PluginSPISwitch) ListMachines(ctx context.Context, providerSpec api.VsphereProviderSpec, secrets *corev1.Secret) (map[string]string, error) {
-	switch providerSpec.SpecVersion() {
-	case 1:
-		return spi.spec1.ListMachines(ctx, providerSpec.(*api.VsphereProviderSpec1), secrets)
-	case 2:
-		return spi.spec2.ListMachines(ctx, providerSpec.(*api.VsphereProviderSpec2), secrets)
-	default:
-		return nil, fmt.Errorf("invalid spec version")
+func (spi *PluginSPISwitch) ListMachines(ctx context.Context, providerSpec *api.VsphereProviderSpec, secrets *corev1.Secret) (map[string]string, error) {
+	if providerSpec.V1 != nil {
+		return spi.spec1.ListMachines(ctx, providerSpec.V1, secrets)
 	}
+	if providerSpec.V2 != nil {
+		return spi.spec2.ListMachines(ctx, providerSpec.V2, secrets)
+	}
+	return nil, fmt.Errorf("invalid spec version")
 }

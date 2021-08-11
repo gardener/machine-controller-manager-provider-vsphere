@@ -93,3 +93,27 @@ func (t *RelevantTags) Matches(tags map[string]string) bool {
 	}
 	return matchedCluster && matchedRole
 }
+
+// GetLabels returns label for relevant tags
+func (t *RelevantTags) GetLabels() map[string]string {
+	return map[string]string{
+		api.TagMCMClusterName: t.clusterName,
+		api.TagMCMRole:        t.nodeRole,
+	}
+}
+
+// NonRelevant returns a copy of the input map without the relevant tags
+func (t *RelevantTags) NonRelevant(tags map[string]string) map[string]string {
+	result := map[string]string{}
+	for key, value := range tags {
+		switch key {
+		case t.clusterNameKey:
+		case t.nodeRoleKey:
+		case api.TagMCMClusterName:
+		case api.TagMCMRole:
+		default:
+			result[key] = value
+		}
+	}
+	return result
+}

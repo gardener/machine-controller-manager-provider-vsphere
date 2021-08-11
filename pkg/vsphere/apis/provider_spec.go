@@ -32,8 +32,9 @@ const (
 )
 
 // VsphereProviderSpec is an interface to hide the concrete spec version
-type VsphereProviderSpec interface {
-	SpecVersion() int
+type VsphereProviderSpec struct {
+	V1 *VsphereProviderSpec1 `json:"v1,omitempty"`
+	V2 *VsphereProviderSpec2 `json:"v2,omitempty"`
 }
 
 // VsphereProviderSpec1 contains the fields of
