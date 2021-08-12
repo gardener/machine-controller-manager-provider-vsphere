@@ -90,10 +90,8 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 	}
 	_, err = controllerutil.CreateOrUpdate(ctx, client, configMap, func() error {
 		configMap.Data = map[string]string{
-			"guestinfo.metadata":          "e30=",
-			"guestinfo.metadata.encoding": "base64",
-			"guestinfo.userdata":          base64.StdEncoding.EncodeToString([]byte(userdata)),
-			"guestinfo.userdata.encoding": "base64",
+			"hostname":  machineName,
+			"user-data": base64.StdEncoding.EncodeToString([]byte(userdata)),
 		}
 		return nil
 	})
@@ -120,7 +118,7 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 	vm.Spec.ImageName = v2.ImageName
 	vm.Spec.VmMetadata = &vmopapi.VirtualMachineMetadata{
 		ConfigMapName: configMap.Name,
-		Transport:     "ExtraConfig",
+		Transport:     vmopapi.VirtualMachineMetadataOvfEnvTransport,
 	}
 	vm.Annotations = relevantTags.NonRelevant(providerSpec.Tags)
 	vm.Annotations["vmoperator.vmware.com/image-supported-check"] = "disable"
