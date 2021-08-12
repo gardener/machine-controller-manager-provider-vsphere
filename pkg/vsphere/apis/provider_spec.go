@@ -144,10 +144,9 @@ type VsphereProviderSpec2 struct {
 	// +optional
 	ResourcePolicyName *string `json:"resourcePolicyName,omitempty"`
 
-	// TODO
 	// SystemDisk specifies the system disk
 	// +optional
-	//SystemDisk *VSphereSystemDisk `json:"systemDisk,omitempty"`
+	SystemDisk *VSphereSystemDisk `json:"systemDisk,omitempty"`
 
 	// TODO
 	// ExtraConfig allows to specify additional VM options.

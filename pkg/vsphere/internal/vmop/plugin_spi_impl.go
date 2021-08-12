@@ -30,6 +30,7 @@ import (
 	vmopapi "github.com/vmware-tanzu/vm-operator-api/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/cache"
@@ -127,6 +128,24 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 	vm.Labels = relevantTags.GetLabels()
 	vm.Labels[api.LabelMCMVSphere] = "true"
 	vm.Spec.PowerState = vmopapi.VirtualMachinePoweredOn
+
+	if v2.SystemDisk != nil {
+		deviceKey := 2000 // 2000 is a de facto value that is assigned to the first disk when a VM is created.
+		value := fmt.Sprintf("%dGi", v2.SystemDisk.Size)
+		q, err := resource.ParseQuantity(value)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse disk size quantity %s: %s", value, err)
+		}
+		vm.Spec.Volumes = []vmopapi.VirtualMachineVolume{
+			{
+				Name: "system",
+				VsphereVolume: &vmopapi.VsphereVolumeSource{
+					Capacity:  corev1.ResourceList{"ephemeral-storage": q},
+					DeviceKey: &deviceKey,
+				},
+			},
+		}
+	}
 
 	err = client.Create(ctx, vm)
 	if err != nil {
