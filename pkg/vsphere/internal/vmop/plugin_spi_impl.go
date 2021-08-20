@@ -151,39 +151,33 @@ func (spi *PluginSPIImpl) CreateMachine(ctx context.Context, machineName string,
 	}
 
 	timeoutTimestamp := time.Now().Add(timeout)
-	for time.Now().Before(timeoutTimestamp) && vm.Status.InstanceUUID == "" {
+	for time.Now().Before(timeoutTimestamp) && vm.Status.BiosUUID == "" {
 		time.Sleep(createCheck)
 		if err := client.Get(ctx, objectKeyFromObject(vm), vm); err != nil {
 			return "", fmt.Errorf("getting virtual machine %s failed: %w", machineName, err)
 		}
 	}
-	if vm.Status.InstanceUUID == "" {
+	if vm.Status.BiosUUID == "" {
 		_ = client.Delete(ctx, vm)
 		return "", fmt.Errorf("timeout on vm create of virtual machine %s. phase=%s", machineName, vm.Status.Phase)
 	}
 
-	providerID := spi.encodeProviderID(v2.Namespace, vm.Status.InstanceUUID)
+	providerID := spi.encodeProviderID(vm.Status.BiosUUID)
 	return providerID, nil
 }
 
-func (spi *PluginSPIImpl) encodeProviderID(namespace, machineID string) string {
+func (spi *PluginSPIImpl) encodeProviderID(machineID string) string {
 	if machineID == "" {
 		return ""
 	}
-	return fmt.Sprintf("%s%s/%s", providerPrefix, namespace, machineID)
+	return providerPrefix + machineID
 }
 
-func (spi *PluginSPIImpl) decodeProviderID(providerID string) (namespace, machineID string) {
+func (spi *PluginSPIImpl) getMachineIDFromProviderID(providerID string) string {
 	if !strings.HasPrefix(providerID, providerPrefix) {
-		return
+		return ""
 	}
-	parts := strings.Split(providerID[len(providerPrefix):], "/")
-	if len(parts) != 2 {
-		return
-	}
-	namespace = parts[0]
-	machineID = parts[1]
-	return
+	return strings.TrimPrefix(providerID, providerPrefix)
 }
 
 // DeleteMachine deletes a VM by name
@@ -203,7 +197,7 @@ func (spi *PluginSPIImpl) DeleteMachine(ctx context.Context, machineName string,
 	if err := client.Delete(ctx, vm); err != nil {
 		return "", fmt.Errorf("deleting virtual machine %s failed: %w", machineName, err)
 	}
-	foundProviderID := spi.encodeProviderID(providerSpec.Namespace, vm.Status.InstanceUUID)
+	foundProviderID := spi.encodeProviderID(vm.Status.BiosUUID)
 	return foundProviderID, nil
 }
 
@@ -225,7 +219,7 @@ func (spi *PluginSPIImpl) ShutDownMachine(ctx context.Context, machineName strin
 	if err := client.Update(ctx, vm); err != nil {
 		return "", fmt.Errorf("updating virtual machine %s failed: %w", machineName, err)
 	}
-	foundProviderID := spi.encodeProviderID(providerSpec.Namespace, vm.Status.InstanceUUID)
+	foundProviderID := spi.encodeProviderID(vm.Status.BiosUUID)
 	return foundProviderID, nil
 }
 
@@ -243,9 +237,9 @@ func (spi *PluginSPIImpl) GetMachineStatus(ctx context.Context, machineName stri
 		}
 		return "", fmt.Errorf("getting virtual machine %s failed: %w", machineName, err)
 	}
-	klog.V(4).Infof("Machine %s has status: phase=%s, power=%s, instanceUUID=%s, uniqueID=%s, vmIP=%s",
-		machineName, vm.Status.Phase, vm.Status.PowerState, vm.Status.InstanceUUID, vm.Status.UniqueID, vm.Status.VmIp)
-	foundProviderID := spi.encodeProviderID(providerSpec.Namespace, vm.Status.InstanceUUID)
+	klog.V(4).Infof("Machine %s has status: phase=%s, power=%s, BiosUUID=%s, uniqueID=%s, vmIP=%s",
+		machineName, vm.Status.Phase, vm.Status.PowerState, vm.Status.BiosUUID, vm.Status.UniqueID, vm.Status.VmIp)
+	foundProviderID := spi.encodeProviderID(vm.Status.BiosUUID)
 	return foundProviderID, nil
 }
 
@@ -277,8 +271,8 @@ func (spi *PluginSPIImpl) ListMachines(ctx context.Context, providerSpec *api.Vs
 
 	for _, vm := range vms.Items {
 		machineName := vm.Name
-		if vm.Status.InstanceUUID != "" {
-			providerID := spi.encodeProviderID(v2.Namespace, vm.Status.InstanceUUID)
+		if vm.Status.BiosUUID != "" {
+			providerID := spi.encodeProviderID(vm.Status.BiosUUID)
 			machineList[providerID] = machineName
 		}
 	}
