@@ -25,20 +25,21 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// ValidateVsphereProviderSpec validates Vsphere provider spec
-func ValidateVsphereProviderSpec(spec *api.VsphereProviderSpec, secrets *corev1.Secret) []error {
+// ValidateVsphereProviderSpec1 validates Vsphere provider spec
+func ValidateVsphereProviderSpec1(spec *api.VsphereProviderSpec, secrets *corev1.Secret) []error {
 	var allErrs []error
 
-	if "" == spec.Datastore && "" == spec.DatastoreCluster {
+	v1 := spec.V1
+	if "" == v1.Datastore && "" == v1.DatastoreCluster {
 		allErrs = append(allErrs, fmt.Errorf("either datastoreCluster or datastore field is required"))
 	}
-	if "" == spec.TemplateVM {
+	if "" == v1.TemplateVM {
 		allErrs = append(allErrs, fmt.Errorf("templateVM is a required field"))
 	}
-	if "" == spec.ComputeCluster && "" == spec.ResourcePool && "" == spec.HostSystem {
+	if "" == v1.ComputeCluster && "" == v1.ResourcePool && "" == v1.HostSystem {
 		allErrs = append(allErrs, fmt.Errorf("either computeCluster or resourcePool or hostSystem field is required"))
 	}
-	if "" == spec.Network {
+	if "" == v1.Network {
 		allErrs = append(allErrs, fmt.Errorf("network is a required field"))
 	}
 
@@ -68,6 +69,54 @@ func validateSecrets(secret *corev1.Secret) []error {
 		}
 		if !passwordExists {
 			allErrs = append(allErrs, fmt.Errorf("Secret vspherePassword is required field"))
+		}
+		if !userDataExists {
+			allErrs = append(allErrs, fmt.Errorf("Secret userData is required field"))
+		}
+	}
+
+	return allErrs
+}
+
+// ValidateVsphereProviderSpec2 validates Vsphere provider spec2
+func ValidateVsphereProviderSpec2(spec *api.VsphereProviderSpec, secrets *corev1.Secret) []error {
+	var allErrs []error
+
+	v2 := spec.V2
+	if "" == v2.Namespace {
+		allErrs = append(allErrs, fmt.Errorf("namespace is a required field"))
+	}
+	if "" == v2.ImageName {
+		allErrs = append(allErrs, fmt.Errorf("imageName is a required field"))
+	}
+	if "" == v2.NetworkType {
+		allErrs = append(allErrs, fmt.Errorf("networkType is a required field"))
+	}
+	if "" == v2.NetworkName {
+		allErrs = append(allErrs, fmt.Errorf("networkName is a required field"))
+	}
+	if "" == v2.ClassName {
+		allErrs = append(allErrs, fmt.Errorf("className is a required field"))
+	}
+
+	allErrs = append(allErrs, validateSecrets2(secrets)...)
+	_, tagErrs := tags.NewRelevantTags(spec.Tags)
+	allErrs = append(allErrs, tagErrs...)
+
+	return allErrs
+}
+
+func validateSecrets2(secret *corev1.Secret) []error {
+	var allErrs []error
+
+	if secret == nil {
+		allErrs = append(allErrs, fmt.Errorf("Secret object that has been passed by the MCM is nil"))
+	} else {
+		_, kubeconfigExists := secret.Data[api.VSphereKubeconfig]
+		_, userDataExists := secret.Data["userData"]
+
+		if !kubeconfigExists {
+			allErrs = append(allErrs, fmt.Errorf("Secret %s is required field", api.VSphereKubeconfig))
 		}
 		if !userDataExists {
 			allErrs = append(allErrs, fmt.Errorf("Secret userData is required field"))

@@ -28,7 +28,7 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/codes"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
 	"golang.org/x/net/context"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -209,7 +209,6 @@ func (ms *MachinePlugin) ListMachines(ctx context.Context, req *driver.ListMachi
 		return nil, prepareErrorf(err, "List machines failed")
 	}
 
-	klog.V(2).Infof("List machines request for dc %s, folder %s found %d machines", providerSpec.Datacenter, providerSpec.Folder, len(machineList))
 	return &driver.ListMachinesResponse{
 		MachineList: machineList,
 	}, nil
@@ -251,7 +250,7 @@ func (ms *MachinePlugin) GetVolumeIDs(ctx context.Context, req *driver.GetVolume
 
 // GenerateMachineClassForMigration converts providerSpecificMachineClass to (generic) MachineClass
 func (ms *MachinePlugin) GenerateMachineClassForMigration(ctx context.Context, req *driver.GenerateMachineClassForMigrationRequest) (*driver.GenerateMachineClassForMigrationResponse, error) {
-	klog.V(1).Infof("Migrate request has been recieved for %v", req.MachineClass.Name)
+	klog.V(1).Infof("Migrate request has been received for %v", req.MachineClass.Name)
 	defer klog.V(1).Infof("Migrate request has been processed for %v", req.MachineClass.Name)
 
 	return nil, status.Error(codes.Internal, "Migration cannot be done for this machineClass kind")

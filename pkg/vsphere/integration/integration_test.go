@@ -60,10 +60,16 @@ func TestPluginSPIImpl(t *testing.T) {
 		return
 	}
 
-	spi := &internal.PluginSPIImpl{}
+	providerSpec := cfg.ProviderSpec
+	if providerSpec.V1 == nil && providerSpec.V2 == nil {
+		t.Errorf("neither field 'providerSpec.v1' nor 'providerSpec.v2' set in integrationConfig from %s", configPath)
+		return
+	}
+
+	spi := &internal.PluginSPISwitch{}
 	ctx := context.TODO()
 
-	providerID, err := spi.GetMachineStatus(ctx, cfg.MachineName, "", cfg.ProviderSpec, cfg.Secrets)
+	providerID, err := spi.GetMachineStatus(ctx, cfg.MachineName, "", providerSpec, cfg.Secrets)
 	if err == nil {
 		t.Errorf("Machine name %s already existing", cfg.MachineName)
 		return
@@ -76,7 +82,7 @@ func TestPluginSPIImpl(t *testing.T) {
 		return
 	}
 
-	providerID, err = spi.DeleteMachine(ctx, cfg.MachineName, providerID, cfg.ProviderSpec, cfg.Secrets)
+	providerID, err = spi.DeleteMachine(ctx, cfg.MachineName, providerID, providerSpec, cfg.Secrets)
 	switch err.(type) {
 	case *errors.MachineNotFoundError:
 		// expected
@@ -85,13 +91,13 @@ func TestPluginSPIImpl(t *testing.T) {
 		return
 	}
 
-	providerID, err = spi.CreateMachine(ctx, cfg.MachineName, cfg.ProviderSpec, cfg.Secrets)
+	providerID, err = spi.CreateMachine(ctx, cfg.MachineName, providerSpec, cfg.Secrets)
 	if err != nil {
 		t.Errorf("CreateMachine failed with %s", err)
 		return
 	}
 
-	providerID2, err := spi.GetMachineStatus(ctx, cfg.MachineName, "", cfg.ProviderSpec, cfg.Secrets)
+	providerID2, err := spi.GetMachineStatus(ctx, cfg.MachineName, "", providerSpec, cfg.Secrets)
 	if err != nil {
 		t.Errorf("GetMachineStatus by machine name failed with %s", err)
 		return
@@ -100,7 +106,7 @@ func TestPluginSPIImpl(t *testing.T) {
 		t.Errorf("ProviderID mismatch %s != %s", providerID, providerID2)
 	}
 
-	providerID2, err = spi.GetMachineStatus(ctx, cfg.MachineName, providerID, cfg.ProviderSpec, cfg.Secrets)
+	providerID2, err = spi.GetMachineStatus(ctx, cfg.MachineName, providerID, providerSpec, cfg.Secrets)
 	if err != nil {
 		t.Errorf("GetMachineStatus by providerID failed with %s", err)
 		return
@@ -109,7 +115,7 @@ func TestPluginSPIImpl(t *testing.T) {
 		t.Errorf("ProviderID mismatch %s != %s", providerID, providerID2)
 	}
 
-	providerIDList, err := spi.ListMachines(ctx, cfg.ProviderSpec, cfg.Secrets)
+	providerIDList, err := spi.ListMachines(ctx, providerSpec, cfg.Secrets)
 	if err != nil {
 		t.Errorf("ListMachines failed with %s", err)
 	}
@@ -127,7 +133,7 @@ func TestPluginSPIImpl(t *testing.T) {
 		t.Errorf("Created machine with ID %s not found", providerID)
 	}
 
-	providerID2, err = spi.ShutDownMachine(ctx, cfg.MachineName, providerID, cfg.ProviderSpec, cfg.Secrets)
+	providerID2, err = spi.ShutDownMachine(ctx, cfg.MachineName, providerID, providerSpec, cfg.Secrets)
 	if err != nil {
 		t.Errorf("ShutDownMachine failed with %s", err)
 	}
@@ -135,7 +141,7 @@ func TestPluginSPIImpl(t *testing.T) {
 		t.Errorf("ProviderID mismatch %s != %s", providerID, providerID2)
 	}
 
-	providerID2, err = spi.DeleteMachine(ctx, cfg.MachineName, providerID, cfg.ProviderSpec, cfg.Secrets)
+	providerID2, err = spi.DeleteMachine(ctx, cfg.MachineName, providerID, providerSpec, cfg.Secrets)
 	if err != nil {
 		t.Errorf("DeleteMachine failed with %s", err)
 	}
