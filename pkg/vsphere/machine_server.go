@@ -28,7 +28,7 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/codes"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
 	"golang.org/x/net/context"
-	"k8s.io/klog/v2"
+	"k8s.io/klog"
 )
 
 const (

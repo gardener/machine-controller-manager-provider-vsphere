@@ -29,7 +29,7 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/klog/v2"
+	"k8s.io/klog"
 )
 
 // decodeProviderSpecAndSecret converts request parameters to api.ProviderSpec
