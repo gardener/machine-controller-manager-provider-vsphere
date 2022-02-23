@@ -614,10 +614,8 @@ k8s.io/component-base/logs
 k8s.io/component-base/logs/datapol
 k8s.io/component-base/logs/json
 k8s.io/component-base/logs/sanitization
-# k8s.io/klog v1.0.0
-## explicit
-k8s.io/klog
 # k8s.io/klog/v2 v2.4.0
+## explicit
 k8s.io/klog/v2
 # k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
 k8s.io/kube-openapi/pkg/util/proto
