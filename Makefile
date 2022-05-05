@@ -17,9 +17,9 @@ PROJECT_NAME        := gardener
 BINARY_PATH         := bin/
 IMAGE_REPOSITORY    := eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-vsphere
 IMAGE_TAG           := $(shell cat VERSION)
-CONTROL_NAMESPACE   := default
-CONTROL_KUBECONFIG  := dev/target-kubeconfig.yaml
-TARGET_KUBECONFIG   := dev/target-kubeconfig.yaml
+CONTROL_NAMESPACE := default
+CONTROL_KUBECONFIG := dev/target-kubeconfig.yaml
+TARGET_KUBECONFIG := dev/target-kubeconfig.yaml
 
 #########################################
 # Rules for starting machine-controller locally
