@@ -3,17 +3,17 @@ module github.com/gardener/machine-controller-manager-provider-vsphere
 go 1.16
 
 require (
-	github.com/gardener/machine-controller-manager v0.43.0
+	github.com/gardener/machine-controller-manager v0.44.2
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/pflag v1.0.5
 	github.com/vmware/govmomi v0.28.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
-	golang.org/x/net v0.0.0-20210326060303-6b1517762897
+	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	k8s.io/api v0.20.6
 	k8s.io/component-base v0.20.6
-	k8s.io/klog v1.0.0
+	k8s.io/klog/v2 v2.4.0
 	sigs.k8s.io/yaml v1.2.0
 )
 
