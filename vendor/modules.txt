@@ -161,16 +161,21 @@ github.com/prometheus/procfs/internal/util
 # github.com/spf13/pflag v1.0.5
 ## explicit
 github.com/spf13/pflag
-# github.com/vmware/govmomi v0.22.1
+# github.com/vmware/govmomi v0.28.0
 ## explicit
 github.com/vmware/govmomi
 github.com/vmware/govmomi/find
+github.com/vmware/govmomi/history
+github.com/vmware/govmomi/internal
 github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
+github.com/vmware/govmomi/session/keepalive
 github.com/vmware/govmomi/task
+github.com/vmware/govmomi/vapi/internal
+github.com/vmware/govmomi/vapi/rest
 github.com/vmware/govmomi/view
 github.com/vmware/govmomi/vim25
 github.com/vmware/govmomi/vim25/debug
