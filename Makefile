@@ -47,8 +47,8 @@ start:
 
 .PHONY: revendor
 revendor:
-	@env GO111MODULE=on go mod vendor -v
 	@env GO111MODULE=on go mod tidy -v
+	@env GO111MODULE=on go mod vendor -v
 
 #########################################
 # Rules for testing
