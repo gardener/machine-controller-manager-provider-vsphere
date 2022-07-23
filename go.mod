@@ -3,7 +3,7 @@ module github.com/gardener/machine-controller-manager-provider-vsphere
 go 1.17
 
 require (
-	github.com/gardener/machine-controller-manager v0.45.0
+	github.com/gardener/machine-controller-manager v0.46.0
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.11.0
 	github.com/pkg/errors v0.9.1
