@@ -195,7 +195,7 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 			if err != nil {
 				return errors.Wrap(err, "setting VApp (coreos64)")
 			}
-			vapp = &api.VApp{Properties: map[string]string{"guestinfo.coreos.config.data": ignitionContent}}
+			vapp = &api.VApp{Properties: map[string]string{"guestinfo.ignition.config.data": ignitionContent}}
 		case "other4xLinux64Guest":
 			// experimental support for flatcar
 			// other4xLinux64Guest is used as label for flatcar
@@ -220,7 +220,7 @@ func (cmd *clone) Run(ctx context.Context, client *govmomi.Client) error {
 			if err != nil {
 				return errors.Wrap(err, "setting VApp (flatcar64)")
 			}
-			vapp = &api.VApp{Properties: map[string]string{"guestinfo.coreos.config.data": ignitionContent}}
+			vapp = &api.VApp{Properties: map[string]string{"guestinfo.ignition.config.data": ignitionContent}}
 		default:
 			// Provide cloud-init as VApp.
 			// This assumes, that the image defines a VApp with the properties
