@@ -3,7 +3,7 @@ module github.com/gardener/machine-controller-manager-provider-vsphere
 go 1.18
 
 require (
-	github.com/gardener/machine-controller-manager v0.46.1
+	github.com/gardener/machine-controller-manager v0.47.0
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.11.0
 	github.com/pkg/errors v0.9.1
@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
