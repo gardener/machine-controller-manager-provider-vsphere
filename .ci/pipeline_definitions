@@ -14,19 +14,12 @@ machine-controller-manager-provider-vsphere:
                 build: ~
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-vsphere'
-            resource_labels:
-              - name: 'cloud.gardener.cnudie/responsibles'
-                value:
-                  - type: 'githubUser'
-                    username: 'briantopping'
-                  - type: 'emailAddress'
-                    email: 'brian.topping@sap.com'
     steps_template: &steps_anchor
       steps:
         check:
-          image: 'golang:1.17.11'
+          image: 'golang:1.19'
         build:
-          image: 'golang:1.17.11'
+          image: 'golang:1.19'
           output_dir: 'binary'
         test:
           image: 'eu.gcr.io/gardener-project/gardener/testmachinery/base-step:stable'
@@ -67,5 +60,8 @@ machine-controller-manager-provider-vsphere:
           channel_cfgs:
             internal_scp_workspace:
               channel_name: 'C0170QTBJUW' # gardener-mcm
+              slack_cfg_name: 'scp_workspace'
+            internal_scp_workspace_vmware:
+              channel_name: 'C02DYTGSUNQ' #sap-tech-gardener-on-vmware
               slack_cfg_name: 'scp_workspace'
         component_descriptor: ~
