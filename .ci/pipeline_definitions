@@ -31,7 +31,8 @@ machine-controller-manager-provider-vsphere:
       <<: *steps_anchor
       traits:
         <<: *version_anchor
-        component_descriptor: ~
+        component_descriptor:
+          retention_policy: 'clean-snapshots'
         draft_release: ~
         <<: *publish_anchor
     pull-request:
