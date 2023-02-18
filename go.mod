@@ -10,7 +10,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/vmware/govmomi v0.29.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
-	golang.org/x/net v0.1.0
+	golang.org/x/net v0.7.0
 	k8s.io/api v0.22.9
 	k8s.io/component-base v0.22.9
 	k8s.io/klog/v2 v2.9.0
@@ -47,9 +47,9 @@ require (
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
