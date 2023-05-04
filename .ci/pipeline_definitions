@@ -26,9 +26,9 @@ machine-controller-manager-provider-vsphere:
     steps_template: &steps_anchor
       steps:
         check:
-          image: 'golang:1.19'
+          image: 'golang:1.20'
         build:
-          image: 'golang:1.19'
+          image: 'golang:1.20'
           output_dir: 'binary'
         test:
           image: 'eu.gcr.io/gardener-project/gardener/testmachinery/base-step:stable'
