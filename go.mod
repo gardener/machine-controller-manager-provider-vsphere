@@ -1,6 +1,6 @@
 module github.com/gardener/machine-controller-manager-provider-vsphere
 
-go 1.19
+go 1.20
 
 require (
 	github.com/gardener/machine-controller-manager v0.49.1
