@@ -56,7 +56,9 @@ machine-controller-manager-provider-vsphere:
         version: ~
         cronjob:
           interval: '5m'
-        update_component_deps: ~
+        update_component_deps:
+          set_dependency_version_script_container_image:
+            image_reference: 'golang:1.20.5'
     release:
       <<: *steps_anchor
       traits:
