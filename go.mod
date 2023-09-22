@@ -3,7 +3,7 @@ module github.com/gardener/machine-controller-manager-provider-vsphere
 go 1.19
 
 require (
-	github.com/gardener/machine-controller-manager v0.49.0
+	github.com/gardener/machine-controller-manager v0.50.0
 	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.27.4
 	github.com/pkg/errors v0.9.1
@@ -11,8 +11,8 @@ require (
 	github.com/vmware/govmomi v0.30.4
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/net v0.9.0
-	k8s.io/api v0.26.3
-	k8s.io/component-base v0.26.3
+	k8s.io/api v0.27.2
+	k8s.io/component-base v0.27.2
 	k8s.io/klog/v2 v2.100.1
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -52,7 +52,6 @@ require (
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
@@ -66,10 +65,10 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apimachinery v0.26.3 // indirect
-	k8s.io/apiserver v0.26.3 // indirect
-	k8s.io/client-go v0.26.3 // indirect
-	k8s.io/cluster-bootstrap v0.26.3 // indirect
+	k8s.io/apimachinery v0.27.2 // indirect
+	k8s.io/apiserver v0.27.2 // indirect
+	k8s.io/client-go v0.27.2 // indirect
+	k8s.io/cluster-bootstrap v0.27.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
