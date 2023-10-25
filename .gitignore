@@ -5,7 +5,7 @@
 /dev
 /test
 /logs
-
+.env
 .vscode
 .idea
 *.DS_Store
