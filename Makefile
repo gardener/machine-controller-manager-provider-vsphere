@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+-include .env
+
 PROVIDER_NAME       := Vsphere
 PROJECT_NAME        := gardener
 BINARY_PATH         := bin/
 IMAGE_REPOSITORY    := eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-vsphere
 IMAGE_TAG           := $(shell cat VERSION)
-
--include .env
 
 #########################################
 # Rules for starting machine-controller locally
