@@ -1,7 +1,9 @@
 machine-controller-manager-provider-vsphere:
-  template: 'default'
   base_definition:
-    repo: ~
+    traits:
+      version:
+        inject_effective_version: true
+      component_descriptor: ~
   inherit:
     publish_template: &publish_anchor
       publish:
@@ -12,7 +14,6 @@ machine-controller-manager-provider-vsphere:
                 source: ~ # default
               steps:
                 build: ~
-            registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-vsphere'
             resource_labels:
             - name: 'gardener.cloud/cve-categorisation'
@@ -32,14 +33,10 @@ machine-controller-manager-provider-vsphere:
           output_dir: 'binary'
         test:
           image: 'europe-docker.pkg.dev/gardener-project/releases/testmachinery/base-step:stable'
-    version_template: &version_anchor
-      version:
-        inject_effective_version: true
   jobs:
     head-update:
       <<: *steps_anchor
       traits:
-        <<: *version_anchor
         component_descriptor:
           retention_policy: 'clean-snapshots'
         draft_release: ~
@@ -47,13 +44,10 @@ machine-controller-manager-provider-vsphere:
     pull-request:
       <<: *steps_anchor
       traits:
-        <<: *version_anchor
         pull-request: ~
         <<: *publish_anchor
     create-upgrade-prs:
       traits:
-        component_descriptor: ~
-        version: ~
         cronjob:
           interval: '5m'
         update_component_deps: ~
@@ -63,6 +57,7 @@ machine-controller-manager-provider-vsphere:
         <<: *publish_anchor
         version:
           preprocess: 'finalize'
+        component_descriptor: ~
         release:
           nextversion: 'bump_minor'
         slack:
@@ -74,4 +69,3 @@ machine-controller-manager-provider-vsphere:
             internal_scp_workspace_vmware:
               channel_name: 'C02DYTGSUNQ' #sap-tech-gardener-on-vmware
               slack_cfg_name: 'scp_workspace'
-        component_descriptor: ~
