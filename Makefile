@@ -17,7 +17,7 @@
 PROVIDER_NAME       := Vsphere
 PROJECT_NAME        := gardener
 BINARY_PATH         := bin/
-IMAGE_REPOSITORY    := eu.gcr.io/gardener-project/gardener/machine-controller-manager-provider-vsphere
+IMAGE_REPOSITORY    := europe-docker.pkg.dev/gardener-project/public/gardener/machine-controller-manager-provider-vsphere
 IMAGE_TAG           := $(shell cat VERSION)
 
 #########################################

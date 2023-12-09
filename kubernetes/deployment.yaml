@@ -14,14 +14,14 @@ spec:
     spec:
       containers:
       - name: cmi-plugin
-        image: eu.gcr.io/gardener-project/test/machine-controller-manager-provider-vsphere:v0.1.0-dev
+        image: europe-docker.pkg.dev/gardener-project/public/machine-controller-manager-provider-vsphere:v0.1.0-dev
         imagePullPolicy: Always
         #imagePullPolicy: IfNotPresent
         command:
         - ./cmi-plugin
         - --endpoint=tcp://127.0.0.1:8080
       - name: machine-controller-manager
-        image: eu.gcr.io/gardener-project/gardener/machine-controller-manager:1.0.0
+        image: europe-docker.pkg.dev/gardener-project/public/gardener/machine-controller-manager:1.0.0
         command:
           - ./machine-controller-manager
           - --v=2
